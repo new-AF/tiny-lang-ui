@@ -22,7 +22,6 @@ const ValueContainer = ({ children, className }) => {
         <div
             className={mergeClassNames(
                 "font-mono",
-                "min-h-10",
                 "rounded-md",
                 "bg-slate-900",
                 "p-(--spacing-sm)",
@@ -36,16 +35,26 @@ const ValueContainer = ({ children, className }) => {
 
 export const App = () => {
     const [text, setText] = useState("");
-    const [log, setLog] = useState("");
+
+    // initial machine counter value = 0
+    const [log, setLogCore] = useState(JSON.stringify(String.fromCharCode(0)));
     const [counter, setCounter] = useState(0);
 
     const [isLoading, startTransition] = useTransition();
 
+    // escape with " "
+    const setLog = (val) => {
+        const output = JSON.stringify(val);
+        setLogCore(output);
+    };
+
     useEffect(() => {
+        // reset log
+        setLog("");
         startTransition(() => {
-            const value = exeucte(text, (paramValue) => {
-                setLog(log + paramValue);
-            });
+            const value = exeucte(text);
+            // accumulate characters
+            setLog((prevLog) => prevLog + String.fromCharCode(value));
             setCounter(value);
         });
     }, [text]);
@@ -103,8 +112,7 @@ export const App = () => {
                     "flex",
                     "flex-col",
                     "items-center",
-                    "pt-(--spacing-sm)",
-                    "pb-(--spacing-md)",
+                    "pt-(--spacing-md)",
                 )}
             >
                 <h1 className={mergeClassNames("text-3xl", "font-bold")}>
@@ -124,11 +132,11 @@ export const App = () => {
                 <div
                     className={mergeClassNames(
                         "px-(--spacing-sm)",
-                        "pb-(--spacing-md)",
+                        "py-(--spacing-md)",
                         "backdrop-blur-md",
                         // "bg-slate-950",
                         "sticky",
-                        "top-(--spacing-sm)",
+                        "top-0",
                         "flex",
                         "flex-col",
                         "gap-y-(--spacing-md)",
@@ -143,10 +151,16 @@ export const App = () => {
                         )}
                     >
                         <textarea
+                            onChange={(event) => {
+                                setText(event.target.value);
+                            }}
                             value={text}
                             type="text"
                             placeholder="Type your program here..."
                             className={mergeClassNames(
+                                "max-h-[3lh]",
+                                "break-all",
+                                "[field-sizing:content]", // expand automatically
                                 "font-mono",
                                 "block",
                                 "w-full",
