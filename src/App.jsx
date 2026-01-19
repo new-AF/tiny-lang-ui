@@ -4,32 +4,36 @@ import { useState, useTransition } from "react";
 import { exeucte } from "./interpreter/execute";
 import { useEffect } from "react";
 
-const LoadingHeader = ({ children, className, isLoading }) => {
+// Console Log. Counter Value
+const ValueContainer = ({ header, isLoading, value, children, className }) => {
     const loadingElement = isLoading ? (
         <div className={mergeClassNames("loader")} />
     ) : undefined;
 
     return (
-        <h2 className={mergeClassNames("text-lg", "font-semibold", className)}>
-            {children} {loadingElement}
-        </h2>
-    );
-};
-
-// Console Log. Counter Value
-const ValueContainer = ({ children, className }) => {
-    return (
-        <div
+        <section
             className={mergeClassNames(
-                "font-mono",
-                "rounded-md",
-                "bg-slate-900",
-                "p-(--spacing-sm)",
+                "flex",
+                "flex-col",
+                "gap-y-(--spacing-sm)",
                 className,
             )}
         >
-            {children}
-        </div>
+            <h2 className={mergeClassNames("text-lg", "font-semibold")}>
+                {header} {loadingElement}
+            </h2>
+
+            <div
+                className={mergeClassNames(
+                    "font-mono",
+                    "rounded-md",
+                    "bg-slate-900",
+                    "p-(--spacing-sm)",
+                )}
+            >
+                {value || children}
+            </div>
+        </section>
     );
 };
 
@@ -150,65 +154,66 @@ export const App = () => {
                             "gap-y-(--spacing-sm)",
                         )}
                     >
-                        <textarea
-                            onChange={(event) => {
-                                setText(event.target.value);
-                            }}
-                            value={text}
-                            type="text"
-                            placeholder="Type your program here..."
+                        <div
                             className={mergeClassNames(
-                                "max-h-[3lh]",
-                                "break-all",
-                                "[field-sizing:content]", // expand automatically
-                                "font-mono",
-                                "block",
-                                "w-full",
-                                "px-3",
-                                "py-2",
-                                "border",
-                                "border-slate-300",
-                                "rounded-md",
-                                "shadow-sm",
-                                "placeholder:text-slate-400",
-                                "focus:outline-none",
-                                "focus:border-blue-500",
-                                "focus:ring-blue-500",
-                                "sm:text-sm",
-                                "resize-y",
+                                "flex",
+                                "flex-col",
+                                "gap-y-(--spacing-xs)",
                             )}
-                        />
+                        >
+                            <label
+                                for="program"
+                                className={mergeClassNames(
+                                    "flex",
+                                    "flex-col",
+                                    "gap-y-(--spacing-xs)",
+                                )}
+                            >
+                                <span class="text-lg font-medium">
+                                    Your Program
+                                </span>
+
+                                <textarea
+                                    id="program"
+                                    className={mergeClassNames(
+                                        "p-(--spacing-sm)",
+                                        "mt-0.5 w-full resize-none rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white",
+                                    )}
+                                    rows="4"
+                                ></textarea>
+                            </label>
+
+                            <div class="mt-1.5 flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    class="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                                >
+                                    Clear
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                                >
+                                    Run
+                                </button>
+                            </div>
+                        </div>
                     </section>
 
                     {/* Console Log */}
-                    <section
-                        className={mergeClassNames(
-                            "flex",
-                            "flex-col",
-                            "gap-y-(--spacing-sm)",
-                        )}
-                    >
-                        <LoadingHeader isLoading={isLoading}>
-                            Console Log
-                        </LoadingHeader>
-
-                        <ValueContainer>{log}</ValueContainer>
-                    </section>
+                    <ValueContainer
+                        header={"Console Log"}
+                        isLoading={isLoading}
+                        value={log}
+                    />
 
                     {/* Counter Value */}
-                    <section
-                        className={mergeClassNames(
-                            "flex",
-                            "flex-col",
-                            "gap-y-(--spacing-sm)",
-                        )}
-                    >
-                        <LoadingHeader isLoading={isLoading}>
-                            Counter Value
-                        </LoadingHeader>
-
-                        <ValueContainer>{counter}</ValueContainer>
-                    </section>
+                    <ValueContainer
+                        header={"Counter Value"}
+                        isLoading={isLoading}
+                        value={counter}
+                    />
                 </div>
 
                 {/* Examples */}
