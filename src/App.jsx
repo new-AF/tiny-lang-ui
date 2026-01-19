@@ -10,6 +10,11 @@ export const App = () => {
                     "break-all",
                     "font-mono",
                     "list-inside",
+                    "py-(--spacing-sm)",
+                    "rounded-md",
+                    "cursor-pointer",
+                    "transition",
+                    "hover:bg-slate-800",
                 )}
             >
                 {/* input */}
@@ -20,20 +25,26 @@ export const App = () => {
                 {/* expectedOutput */}
                 <span
                     className={mergeClassNames(
-                        "ml-(--spacing-sm)",
-                        "bg-slate-800",
+                        "block",
+                        "mt-(--spacing-xs)",
+                        "w-[max-content]",
+                        "text-slate-500",
                         "text-sm",
                         "rounded-md",
                         "px-(--spacing-xs)",
                         "py-[0.1em]",
+                        // lg
+                        "lg:inline",
+                        "lg:ml-(--spacing-sm)",
                     )}
                 >
-                    ({expectedOutput} is expected output)
+                    (expected output: {expectedOutput})
                 </span>
             </li>
         );
     });
 
+    /* return */
     return (
         <>
             <header
@@ -41,7 +52,8 @@ export const App = () => {
                     "flex",
                     "flex-col",
                     "items-center",
-                    "py-(--spacing-sm)",
+                    "pt-(--spacing-sm)",
+                    "pb-(--spacing-md)",
                 )}
             >
                 <h1 className={mergeClassNames("text-3xl", "font-bold")}>
@@ -50,58 +62,115 @@ export const App = () => {
             </header>
             <main
                 className={mergeClassNames(
-                    "px-(--spacing-sm)",
                     "flex",
                     "flex-col",
-                    "gap-y-(--spacing-sm)",
+                    // lg
+                    "lg:max-w-4xl",
+                    "lg:mx-auto",
                 )}
             >
-                {/* input */}
-                <section
+                {/* Sticky: Input + Console Log + Counter Value */}
+                <div
                     className={mergeClassNames(
+                        "px-(--spacing-sm)",
+                        "pb-(--spacing-md)",
+                        "backdrop-blur-md",
+                        // "bg-slate-950",
+                        "sticky",
+                        "top-(--spacing-sm)",
                         "flex",
                         "flex-col",
-                        "gap-y-(--spacing-sm)",
+                        "gap-y-(--spacing-md)",
                     )}
                 >
-                    <textarea
-                        type="text"
-                        placeholder="Type your program here..."
+                    {/* Input */}
+                    <section
                         className={mergeClassNames(
-                            "block",
-                            "w-full",
-                            "px-3",
-                            "py-2",
-                            "border",
-                            "border-slate-300",
-                            "rounded-md",
-                            "shadow-sm",
-                            "placeholder:text-slate-400",
-                            "focus:outline-none",
-                            "focus:border-blue-500",
-                            "focus:ring-blue-500",
-                            "sm:text-sm",
-                            "resize-y",
+                            "flex",
+                            "flex-col",
+                            "gap-y-(--spacing-sm)",
                         )}
-                    />
-                </section>
+                    >
+                        <textarea
+                            type="text"
+                            placeholder="Type your program here..."
+                            className={mergeClassNames(
+                                "font-mono",
+                                "block",
+                                "w-full",
+                                "px-3",
+                                "py-2",
+                                "border",
+                                "border-slate-300",
+                                "rounded-md",
+                                "shadow-sm",
+                                "placeholder:text-slate-400",
+                                "focus:outline-none",
+                                "focus:border-blue-500",
+                                "focus:ring-blue-500",
+                                "sm:text-sm",
+                                "resize-y",
+                            )}
+                        />
+                    </section>
 
-                {/* output */}
+                    {/* Console Log */}
+                    <section
+                        className={mergeClassNames(
+                            "flex",
+                            "flex-col",
+                            "gap-y-(--spacing-sm)",
+                        )}
+                    >
+                        <h2
+                            className={mergeClassNames(
+                                "text-lg",
+                                "font-semibold",
+                            )}
+                        >
+                            Console Log
+                        </h2>
+
+                        <div
+                            className={mergeClassNames(
+                                "min-h-10",
+                                "rounded-md",
+                                "bg-slate-900",
+                            )}
+                        />
+                    </section>
+
+                    {/* Counter Value */}
+                    <section
+                        className={mergeClassNames(
+                            "flex",
+                            "flex-col",
+                            "gap-y-(--spacing-sm)",
+                        )}
+                    >
+                        <h2
+                            className={mergeClassNames(
+                                "text-lg",
+                                "font-semibold",
+                            )}
+                        >
+                            Counter Value
+                        </h2>
+
+                        <div
+                            className={mergeClassNames(
+                                "min-h-10",
+                                "rounded-md",
+                                "bg-slate-900",
+                            )}
+                        />
+                    </section>
+                </div>
+
+                {/* Examples */}
                 <section
                     className={mergeClassNames(
-                        "flex",
-                        "flex-col",
-                        "gap-y-(--spacing-sm)",
-                    )}
-                >
-                    <h2 className={mergeClassNames("text-lg", "font-semibold")}>
-                        Output
-                    </h2>
-                </section>
-
-                {/* examples */}
-                <section
-                    className={mergeClassNames(
+                        "px-(--spacing-sm)",
                         "flex",
                         "flex-col",
                         "gap-y-(--spacing-sm)",
