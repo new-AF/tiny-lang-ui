@@ -1,11 +1,62 @@
 import { mergeClassNames } from "simple-merge-class-names";
 import Examples from "./data/Examples.json";
+import { useState, useTransition } from "react";
+import { exeucte } from "./interpreter/execute";
+import { useEffect } from "react";
+
+const LoadingHeader = ({ children, className, isLoading }) => {
+    const loadingElement = isLoading ? (
+        <div className={mergeClassNames("loader")} />
+    ) : undefined;
+
+    return (
+        <h2 className={mergeClassNames("text-lg", "font-semibold", className)}>
+            {children} {loadingElement}
+        </h2>
+    );
+};
+
+// Console Log. Counter Value
+const ValueContainer = ({ children, className }) => {
+    return (
+        <div
+            className={mergeClassNames(
+                "font-mono",
+                "min-h-10",
+                "rounded-md",
+                "bg-slate-900",
+                "p-(--spacing-sm)",
+                className,
+            )}
+        >
+            {children}
+        </div>
+    );
+};
 
 export const App = () => {
+    const [text, setText] = useState("");
+    const [log, setLog] = useState("");
+    const [counter, setCounter] = useState(0);
+
+    const [isLoading, startTransition] = useTransition();
+
+    useEffect(() => {
+        startTransition(() => {
+            const value = exeucte(text, (paramValue) => {
+                setLog(log + paramValue);
+            });
+            setCounter(value);
+        });
+    }, [text]);
+
     const examples = Examples.map(({ input, expectedOutput }) => {
         return (
             <li
-                key={expectedOutput}
+                onClick={() => {
+                    setText(input);
+                }}
+                key={input.slice(0, 10)}
                 className={mergeClassNames(
                     "break-all",
                     "font-mono",
@@ -92,6 +143,7 @@ export const App = () => {
                         )}
                     >
                         <textarea
+                            value={text}
                             type="text"
                             placeholder="Type your program here..."
                             className={mergeClassNames(
@@ -122,22 +174,11 @@ export const App = () => {
                             "gap-y-(--spacing-sm)",
                         )}
                     >
-                        <h2
-                            className={mergeClassNames(
-                                "text-lg",
-                                "font-semibold",
-                            )}
-                        >
+                        <LoadingHeader isLoading={isLoading}>
                             Console Log
-                        </h2>
+                        </LoadingHeader>
 
-                        <div
-                            className={mergeClassNames(
-                                "min-h-10",
-                                "rounded-md",
-                                "bg-slate-900",
-                            )}
-                        />
+                        <ValueContainer>{log}</ValueContainer>
                     </section>
 
                     {/* Counter Value */}
@@ -148,22 +189,11 @@ export const App = () => {
                             "gap-y-(--spacing-sm)",
                         )}
                     >
-                        <h2
-                            className={mergeClassNames(
-                                "text-lg",
-                                "font-semibold",
-                            )}
-                        >
+                        <LoadingHeader isLoading={isLoading}>
                             Counter Value
-                        </h2>
+                        </LoadingHeader>
 
-                        <div
-                            className={mergeClassNames(
-                                "min-h-10",
-                                "rounded-md",
-                                "bg-slate-900",
-                            )}
-                        />
+                        <ValueContainer>{counter}</ValueContainer>
                     </section>
                 </div>
 

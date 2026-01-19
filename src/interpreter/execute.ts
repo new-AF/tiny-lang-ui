@@ -3,7 +3,10 @@ Do 2 passes:
 1. build jump table
 2. run the program itself
 */
-export const executeTinyLang = (code: string): number => {
+export const exeucte = (
+    code: string,
+    printFunction = (value) => process.stdout.write(value),
+): number => {
     const raiseMalformedInput = (): never => {
         throw new Error("Malformed input");
     };
@@ -66,7 +69,7 @@ export const executeTinyLang = (code: string): number => {
 
             // without new line
             const character = String.fromCharCode(value);
-            process.stdout.write(character);
+            printFunction(character);
 
             return { value, tapeIndex: tapeIndex + 1 };
         },
@@ -252,42 +255,3 @@ export const executeTinyLang = (code: string): number => {
     // return final value
     return currentState.value;
 };
-
-// module runs as main program
-if (import.meta.main) {
-    const helloWorldArray = [
-        // H=72
-        "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!",
-        //  +29; e=101
-        "+++++++++++++++++++++++++++++!",
-        // +7; l=108
-        "+++++++!",
-        // l=108 again
-        "!",
-        // +3; o=111
-        "+++!",
-        // -79; space=32
-        "-------------------------------------------------------------------------------!",
-        // +55; W=87
-        "+++++++++++++++++++++++++++++++++++++++++++++++++++++++!",
-        // +24; o=111
-        "++++++++++++++++++++++++!",
-        // +3; r=114
-        "+++!",
-        // -6; l=108
-        "------!",
-        // -8; d=100
-        "--------!",
-        // -67; !=33
-        "-------------------------------------------------------------------!",
-    ];
-
-    const helloWorldJoined = helloWorldArray.join("");
-
-    const helloWorldLiteral = `++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!+++++++++++++++++++++++++++++!+++++++!!+++!-------------------------------------------------------------------------------!+++++++++++++++++++++++++++++++++++++++++++++++++++++++!++++++++++++++++++++++++!+++!------!--------!-------------------------------------------------------------------!`;
-
-    console.log(helloWorldLiteral);
-
-    executeTinyLang(helloWorldLiteral);
-    console.log();
-}
