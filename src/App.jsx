@@ -31,43 +31,47 @@ const ValueContainer = ({ header, isLoading, value, children, className }) => {
                     "p-(--spacing-sm)",
                 )}
             >
-                {value || children}
+                {value ?? children}
             </div>
         </section>
     );
 };
 
 export const App = () => {
-    const [text, setText] = useState("");
+    const toEscapedAscii = (value) => {
+        const ascii = String.fromCharCode(value);
+        const string = JSON.stringify(ascii);
+        return string;
+    };
 
-    // initial machine counter value = 0
-    const [log, setLogCore] = useState(JSON.stringify(String.fromCharCode(0)));
-    const [counter, setCounter] = useState(0);
+    const [state, setState] = useState({
+        text: "",
+        counter: 0,
+        log: toEscapedAscii(0),
+    });
+
+    const updateState = (obj) => {
+        setState((prevObj) => ({ ...prevObj, ...obj }));
+    };
 
     const [isLoading, startTransition] = useTransition();
 
-    // escape with " "
-    const setLog = (val) => {
-        const output = JSON.stringify(val);
-        setLogCore(output);
-    };
-
-    useEffect(() => {
+    // whener user types in smth
+    /*    useEffect(() => {
         // reset log
-        setLog("");
+        updateState({ log: "" });
         startTransition(() => {
-            const value = exeucte(text);
+            const value = exeucte(state.text);
             // accumulate characters
-            setLog((prevLog) => prevLog + String.fromCharCode(value));
-            setCounter(value);
+            updateState({ counter: value, log: toEscapedAscii(value) });
         });
-    }, [text]);
+    }, [state.text]); */
 
     const examples = Examples.map(({ input, expectedOutput }) => {
         return (
             <li
                 onClick={() => {
-                    setText(input);
+                    updateState({ text: input });
                 }}
                 key={input.slice(0, 10)}
                 className={mergeClassNames(
@@ -174,17 +178,24 @@ export const App = () => {
                                 </span>
 
                                 <textarea
+                                    value={state.text}
+                                    onInput={(event) =>
+                                        updateState({
+                                            text: event.target.value,
+                                        })
+                                    }
                                     id="program"
                                     className={mergeClassNames(
                                         "p-(--spacing-sm)",
                                         "mt-0.5 w-full resize-none rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white",
                                     )}
                                     rows="4"
-                                ></textarea>
+                                />
                             </label>
 
                             <div class="mt-1.5 flex items-center justify-end gap-2">
                                 <button
+                                    onClick={() => updateState({ text: "" })}
                                     type="button"
                                     class="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
                                 >
@@ -201,18 +212,18 @@ export const App = () => {
                         </div>
                     </section>
 
-                    {/* Console Log */}
-                    <ValueContainer
-                        header={"Console Log"}
-                        isLoading={isLoading}
-                        value={log}
-                    />
-
                     {/* Counter Value */}
                     <ValueContainer
                         header={"Counter Value"}
                         isLoading={isLoading}
-                        value={counter}
+                        value={0}
+                    />
+
+                    {/* Console Log */}
+                    <ValueContainer
+                        header={"Acummulated Output"}
+                        isLoading={isLoading}
+                        value={state.log}
                     />
                 </div>
 
