@@ -47,25 +47,46 @@ export const App = () => {
     const [state, setState] = useState({
         text: "",
         counter: 0,
-        log: toEscapedAscii(0),
+        log: toEscapedAscii(0), // accumulated characters, reset manually
     });
 
+    // except log, accumulate it
     const updateState = (obj) => {
-        setState((prevObj) => ({ ...prevObj, ...obj }));
+        setState((prevObj) => {
+            const combined = { ...prevObj, ...obj };
+            return combined;
+        });
     };
 
     const [isLoading, startTransition] = useTransition();
 
     // whener user types in smth
-    /*    useEffect(() => {
-        // reset log
+    useEffect(() => {
+        // reset accumuluated output
         updateState({ log: "" });
         startTransition(() => {
-            const value = exeucte(state.text);
-            // accumulate characters
-            updateState({ counter: value, log: toEscapedAscii(value) });
+            // build the accumulator
+            const array = [];
+
+            // closure, reference `array` from inside function
+            const accumulate = (character) => {
+                array.push(character);
+            };
+
+            // accumulate characters, and get single value counter
+            const value = exeucte(state.text, accumulate);
+
+            const string = array.join("");
+            const escaped = JSON.stringify(string);
+
+            // if we printed, log that, otherwise, escape ascii value
+            updateState({
+                counter: value,
+                log: escaped,
+            });
+            // debugger;
         });
-    }, [state.text]); */
+    }, [state.text]);
 
     const examples = Examples.map(({ input, expectedOutput }) => {
         return (
@@ -141,7 +162,7 @@ export const App = () => {
                     className={mergeClassNames(
                         "px-(--spacing-sm)",
                         "py-(--spacing-md)",
-                        "backdrop-blur-md",
+                        "backdrop-blur-xl",
                         // "bg-slate-950",
                         "sticky",
                         "top-0",
@@ -216,15 +237,18 @@ export const App = () => {
                     <ValueContainer
                         header={"Counter Value"}
                         isLoading={isLoading}
-                        value={0}
+                        value={state.counter}
                     />
 
-                    {/* Console Log */}
-                    <ValueContainer
-                        header={"Acummulated Output"}
-                        isLoading={isLoading}
-                        value={state.log}
-                    />
+                    {/* but only if we printed. > 2 because escaped empty string is ""
+                    Console Log */}
+                    {state.log && state.log.length > 2 && (
+                        <ValueContainer
+                            header={"Acummulated Print Output"}
+                            isLoading={isLoading}
+                            value={state.log}
+                        />
+                    )}
                 </div>
 
                 {/* Examples */}
