@@ -5,7 +5,14 @@ import { exeucte } from "./interpreter/execute";
 import { useEffect } from "react";
 
 // Console Log. Counter Value
-const ValueContainer = ({ header, isLoading, value, children, className }) => {
+const ValueContainer = ({
+    header,
+    isLoading,
+    value,
+    children,
+    disabled,
+    className,
+}) => {
     const loadingElement = isLoading ? (
         <div className={mergeClassNames("loader")} />
     ) : undefined;
@@ -13,6 +20,13 @@ const ValueContainer = ({ header, isLoading, value, children, className }) => {
     return (
         <section
             className={mergeClassNames(
+                //
+                disabled === true ? "opacity-40 saturate-50" : false,
+                //
+                "transition-all",
+                "duration-300",
+                "ease-out",
+                // smoothen animiation
                 "flex",
                 "flex-col",
                 "gap-y-(--spacing-sm)",
@@ -25,13 +39,18 @@ const ValueContainer = ({ header, isLoading, value, children, className }) => {
 
             <div
                 className={mergeClassNames(
+                    disabled ? "italic" : false,
+                    // hacked this
+                    "max-w-[90vw]",
+                    "overflow-x-auto",
+                    //
                     "font-mono",
                     "rounded-md",
                     "bg-slate-900",
                     "p-(--spacing-sm)",
                 )}
             >
-                {value ?? children}
+                {disabled ? "No Output" : (value ?? children)}
             </div>
         </section>
     );
@@ -150,6 +169,8 @@ export const App = () => {
             </header>
             <main
                 className={mergeClassNames(
+                    // "overflow-x-auto",
+                    //
                     "flex",
                     "flex-col",
                     // lg
@@ -160,6 +181,7 @@ export const App = () => {
                 {/* Sticky: Input + Console Log + Counter Value */}
                 <div
                     className={mergeClassNames(
+                        //
                         "px-(--spacing-sm)",
                         "py-(--spacing-md)",
                         "backdrop-blur-xl",
@@ -240,15 +262,19 @@ export const App = () => {
                         value={state.counter}
                     />
 
-                    {/* but only if we printed. > 2 because escaped empty string is ""
-                    Console Log */}
-                    {state.log && state.log.length > 2 && (
+                    {/*
+                    but only if we printed.
+                    > 2 because json escaped empty string is ""
+                    Console Log
+                    */}
+                    {
                         <ValueContainer
-                            header={"Acummulated Print Output"}
+                            disabled={!(state.log && state.log.length > 2)}
+                            header={"Print Output"}
                             isLoading={isLoading}
                             value={state.log}
                         />
-                    )}
+                    }
                 </div>
 
                 {/* Examples */}
