@@ -3,7 +3,7 @@ Do 2 passes:
 1. build jump table
 2. run the program itself
 */
-export const exeucte = (code: string, printFunction): number => {
+export const execute = (code: string, printFunction): number => {
     const raiseMalformedInput = (): never => {
         throw new Error("Malformed input");
     };

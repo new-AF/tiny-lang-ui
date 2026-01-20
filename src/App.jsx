@@ -1,16 +1,16 @@
 import { mergeClassNames } from "simple-merge-class-names";
 import Examples from "./data/Examples.json";
 import { useState, useTransition } from "react";
-import { exeucte } from "./interpreter/execute";
+import { execute } from "./interpreter/execute";
 import { useEffect } from "react";
 
 // Console Log. Counter Value
 const ValueContainer = ({
     header,
     isLoading,
-    value,
     children,
     disabled,
+    disabledOuput,
     className,
 }) => {
     const loadingElement = isLoading ? (
@@ -50,23 +50,17 @@ const ValueContainer = ({
                     "p-(--spacing-sm)",
                 )}
             >
-                {disabled ? "No Output" : (value ?? children)}
+                {disabled ? disabledOuput : children}
             </div>
         </section>
     );
 };
 
 export const App = () => {
-    const toEscapedAscii = (value) => {
-        const ascii = String.fromCharCode(value);
-        const string = JSON.stringify(ascii);
-        return string;
-    };
-
     const [state, setState] = useState({
         text: "",
         counter: 0,
-        log: toEscapedAscii(0), // accumulated characters, reset manually
+        log: "", // accumulated characters, reset manually
     });
 
     // except log, accumulate it
@@ -79,10 +73,8 @@ export const App = () => {
 
     const [isLoading, startTransition] = useTransition();
 
-    // whener user types in smth
-    useEffect(() => {
-        // reset accumuluated output
-        updateState({ log: "" });
+    // crux of the app
+    const runProgram = () => {
         startTransition(() => {
             // build the accumulator
             const array = [];
@@ -92,8 +84,9 @@ export const App = () => {
                 array.push(character);
             };
 
+            // run core interpreter
             // accumulate characters, and get single value counter
-            const value = exeucte(state.text, accumulate);
+            const value = execute(state.text, accumulate);
 
             const string = array.join("");
             const escaped = JSON.stringify(string);
@@ -105,7 +98,10 @@ export const App = () => {
             });
             // debugger;
         });
-    }, [state.text]);
+    };
+
+    // whener user types in something
+    useEffect(runProgram, [state.text]);
 
     const examples = Examples.map(({ input, expectedOutput }) => {
         return (
@@ -122,7 +118,7 @@ export const App = () => {
                     "break-all",
                     "font-mono",
                     "list-inside",
-                    "py-(--spacing-sm)",
+                    "p-(--spacing-sm)",
                     "rounded-md",
                     "cursor-pointer",
                     "transition",
@@ -231,8 +227,18 @@ export const App = () => {
                                     }
                                     id="program"
                                     className={mergeClassNames(
+                                        "font-semibold",
                                         "p-(--spacing-sm)",
-                                        "mt-0.5 w-full resize-none rounded-md border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white",
+                                        "mt-0.5",
+                                        "w-full",
+                                        "resize-none",
+                                        "rounded-md",
+                                        "border-gray-300",
+                                        "shadow-sm",
+                                        "sm:text-sm",
+                                        "dark:text-slate-300",
+                                        "dark:border-gray-600",
+                                        "dark:bg-gray-900",
                                     )}
                                     rows="4"
                                 />
@@ -248,6 +254,7 @@ export const App = () => {
                                 </button>
 
                                 <button
+                                    onClick={() => runProgram()}
                                     type="button"
                                     class="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                                 >
@@ -261,8 +268,9 @@ export const App = () => {
                     <ValueContainer
                         header={"Counter Value"}
                         isLoading={isLoading}
-                        value={state.counter}
-                    />
+                    >
+                        {state.counter}
+                    </ValueContainer>
 
                     {/*
                     but only if we printed.
@@ -272,10 +280,13 @@ export const App = () => {
                     {
                         <ValueContainer
                             disabled={!(state.log && state.log.length > 2)}
+                            disabledOuput={"No Print Instructions"}
                             header={"Print Output"}
                             isLoading={isLoading}
                             value={state.log}
-                        />
+                        >
+                            {state.log}
+                        </ValueContainer>
                     }
                 </div>
 
