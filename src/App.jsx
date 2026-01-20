@@ -111,6 +111,10 @@ export const App = () => {
         return (
             <li
                 onClick={() => {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "smooth", // Smooth scroll animation
+                    });
                     updateState({ text: input });
                 }}
                 key={input.slice(0, 10)}
@@ -186,8 +190,6 @@ export const App = () => {
                         "py-(--spacing-md)",
                         "backdrop-blur-xl",
                         // "bg-slate-950",
-                        "sticky",
-                        "top-0",
                         "flex",
                         "flex-col",
                         "gap-y-(--spacing-md)",
