@@ -2,10 +2,22 @@
 Do 2 passes:
 1. build jump table
 2. run the program itself
+
+Execptions raised:
+- MalformedInputError
+
 */
+
+export class MalformedInputError extends Error {
+    public constructor(message = "Malformed input") {
+        super(message);
+        this.name = "MalformedInputError";
+    }
+}
+
 export const execute = (code: string, printFunction): number => {
     const raiseMalformedInput = (): never => {
-        throw new Error("Malformed input");
+        throw new MalformedInputError();
     };
 
     // for better readability and debugability
@@ -252,6 +264,12 @@ export const execute = (code: string, printFunction): number => {
     // run the program the program, as long as there are instructions
     while (currentState.tapeIndex < code.length) {
         const { type, _ } = allTokens[currentState.tapeIndex];
+
+        // invalid character
+        if (type === undefined) {
+            raiseMalformedInput();
+        }
+
         const transform = tokenTypeToStateFunction[type];
         const nextState = transform(currentState, globalJumpTable);
         currentState = nextState;

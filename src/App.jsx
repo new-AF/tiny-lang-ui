@@ -1,8 +1,55 @@
 import { mergeClassNames } from "simple-merge-class-names";
 import Examples from "./data/Examples.json";
 import { useState, useTransition } from "react";
-import { execute } from "./interpreter/execute";
+import { execute, MalformedInputError } from "./interpreter/execute";
 import { useEffect } from "react";
+
+const Badge = ({ success, children }) => {
+    const classes = mergeClassNames(
+        "text-xs",
+        "inline",
+        "rounded-md",
+        "ml-1",
+        "px-(--spacing-xs)",
+        "py-1",
+    );
+
+    if (success === true) {
+        return (
+            <aside className={mergeClassNames(classes, "bg-green-800")}>
+                {children}
+            </aside>
+        );
+    }
+
+    if (success === false) {
+        return (
+            <aside className={mergeClassNames(classes, "bg-red-800")}>
+                {children}
+            </aside>
+        );
+    }
+};
+
+const Header = ({ isLoading, success, children }) => {
+    const badge = (() => {
+        if (success === true) {
+            return <Badge success={true}>Valid Syntax</Badge>;
+        }
+
+        if (success === false) {
+            return <Badge success={false}>Invalid Syntax</Badge>;
+        }
+    })();
+
+    const loadingElement = <div className={mergeClassNames("loader")} />;
+
+    return (
+        <h2 className={mergeClassNames("text-lg", "font-semibold")}>
+            {children} {isLoading ? loadingElement : badge}
+        </h2>
+    );
+};
 
 // Console Log. Counter Value
 const ValueContainer = ({
@@ -10,13 +57,10 @@ const ValueContainer = ({
     isLoading,
     children,
     disabled,
-    disabledOuput,
+    disabledMessage,
+    success,
     className,
 }) => {
-    const loadingElement = isLoading ? (
-        <div className={mergeClassNames("loader")} />
-    ) : undefined;
-
     return (
         <section
             className={mergeClassNames(
@@ -33,9 +77,9 @@ const ValueContainer = ({
                 className,
             )}
         >
-            <h2 className={mergeClassNames("text-lg", "font-semibold")}>
-                {header} {loadingElement}
-            </h2>
+            <Header isLoading={isLoading} success={success}>
+                {header}
+            </Header>
 
             <div
                 className={mergeClassNames(
@@ -50,7 +94,7 @@ const ValueContainer = ({
                     "p-(--spacing-sm)",
                 )}
             >
-                {disabled ? disabledOuput : children}
+                {disabled ? disabledMessage : children}
             </div>
         </section>
     );
@@ -58,6 +102,8 @@ const ValueContainer = ({
 
 export const App = () => {
     const [state, setState] = useState({
+        success: true, // is input valid syntax (has any exception occurred)
+        printed: false, // did we print something
         text: "",
         counter: 0,
         log: "", // accumulated characters, reset manually
@@ -86,16 +132,27 @@ export const App = () => {
 
             // run core interpreter
             // accumulate characters, and get single value counter
-            const value = execute(state.text, accumulate);
+            let value;
+            try {
+                value = execute(state.text, accumulate);
 
-            const string = array.join("");
-            const escaped = JSON.stringify(string);
+                const string = array.join("");
+                const escaped = JSON.stringify(string);
+                const printed = array.length > 0; // did we print something
 
-            // if we printed, log that, otherwise, escape ascii value
-            updateState({
-                counter: value,
-                log: escaped,
-            });
+                // if we printed, log that, otherwise, escape ascii value
+                updateState({
+                    success: true,
+                    printed,
+                    counter: value,
+                    log: escaped,
+                });
+            } catch (error) {
+                if (error instanceof MalformedInputError) {
+                    updateState({ success: false });
+                }
+            }
+
             // debugger;
         });
     };
@@ -214,9 +271,9 @@ export const App = () => {
                                     "gap-y-(--spacing-xs)",
                                 )}
                             >
-                                <span class="text-lg font-medium">
+                                <Header success={state.success}>
                                     Your Program
-                                </span>
+                                </Header>
 
                                 <textarea
                                     value={state.text}
@@ -268,6 +325,8 @@ export const App = () => {
                     <ValueContainer
                         header={"Counter Value"}
                         isLoading={isLoading}
+                        disabled={state.success === false}
+                        disabledMessage={"Invalid Syntax"}
                     >
                         {state.counter}
                     </ValueContainer>
@@ -279,8 +338,15 @@ export const App = () => {
                     */}
                     {
                         <ValueContainer
-                            disabled={!(state.log && state.log.length > 2)}
-                            disabledOuput={"No Print Instructions"}
+                            disabled={
+                                state.success === false ||
+                                state.printed === false
+                            }
+                            disabledMessage={
+                                state.success === false
+                                    ? "Invalid Syntax"
+                                    : "No Print Instructions"
+                            }
                             header={"Print Output"}
                             isLoading={isLoading}
                             value={state.log}
