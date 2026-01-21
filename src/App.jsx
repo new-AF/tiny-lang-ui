@@ -4,6 +4,25 @@ import { useState, useTransition } from "react";
 import { execute, MalformedInputError } from "./interpreter/execute";
 import { useEffect } from "react";
 
+const Code = ({ children }) => {
+    return (
+        <code
+            className={mergeClassNames(
+                "px-(--spacing-xs)",
+                "py-1",
+                "bg-slate-700",
+                "rounded-md",
+            )}
+        >
+            {children}
+        </code>
+    );
+};
+
+const Li = ({ children }) => {
+    return <li className={mergeClassNames("py-(--spacing-sm)")}>{children}</li>;
+};
+
 const Badge = ({ success, children }) => {
     const classes = mergeClassNames(
         "text-xs",
@@ -175,7 +194,7 @@ export const App = () => {
                     "break-all",
                     "font-mono",
                     "list-inside",
-                    "p-(--spacing-sm)",
+                    "py-(--spacing-sm)",
                     "rounded-md",
                     "cursor-pointer",
                     "transition",
@@ -228,146 +247,178 @@ export const App = () => {
                 className={mergeClassNames(
                     // "overflow-x-auto",
                     //
+                    "pt-(--spacing-lg)",
+                    "pb-(--spacing-md)",
+                    "px-(--spacing-sm)",
                     "flex",
                     "flex-col",
                     // lg
                     "lg:max-w-4xl",
                     "lg:mx-auto",
+                    "gap-y-(--spacing-lg)",
                 )}
             >
-                {/* Sticky: Input + Console Log + Counter Value */}
-                <div
+                {/*  Input + Console Log + Counter Value */}
+
+                {/* Input */}
+                <section
                     className={mergeClassNames(
-                        //
-                        "px-(--spacing-sm)",
-                        "py-(--spacing-md)",
-                        "backdrop-blur-xl",
-                        // "bg-slate-950",
                         "flex",
                         "flex-col",
-                        "gap-y-(--spacing-md)",
+                        "gap-y-(--spacing-sm)",
                     )}
                 >
-                    {/* Input */}
-                    <section
+                    <div
                         className={mergeClassNames(
                             "flex",
                             "flex-col",
-                            "gap-y-(--spacing-sm)",
+                            "gap-y-(--spacing-xs)",
                         )}
                     >
-                        <div
+                        <label
+                            for="program"
                             className={mergeClassNames(
                                 "flex",
                                 "flex-col",
                                 "gap-y-(--spacing-xs)",
                             )}
                         >
-                            <label
-                                for="program"
+                            <Header success={state.success}>
+                                Your Program
+                            </Header>
+
+                            <textarea
+                                value={state.text}
+                                onInput={(event) =>
+                                    updateState({
+                                        text: event.target.value,
+                                    })
+                                }
+                                id="program"
                                 className={mergeClassNames(
-                                    "flex",
-                                    "flex-col",
-                                    "gap-y-(--spacing-xs)",
+                                    "font-mono",
+                                    "p-(--spacing-sm)",
+                                    "mt-0.5",
+                                    "w-full",
+                                    "resize-none",
+                                    "rounded-md",
+                                    "border-gray-300",
+                                    "shadow-sm",
+                                    "dark:text-slate-300",
+                                    "dark:border-gray-600",
+                                    "dark:bg-gray-900",
                                 )}
+                                rows="4"
+                            />
+                        </label>
+
+                        <div class="mt-1.5 flex items-center justify-end gap-2">
+                            <button
+                                onClick={() => updateState({ text: "" })}
+                                type="button"
+                                class="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
                             >
-                                <Header success={state.success}>
-                                    Your Program
-                                </Header>
+                                Clear
+                            </button>
 
-                                <textarea
-                                    value={state.text}
-                                    onInput={(event) =>
-                                        updateState({
-                                            text: event.target.value,
-                                        })
-                                    }
-                                    id="program"
-                                    className={mergeClassNames(
-                                        "font-semibold",
-                                        "p-(--spacing-sm)",
-                                        "mt-0.5",
-                                        "w-full",
-                                        "resize-none",
-                                        "rounded-md",
-                                        "border-gray-300",
-                                        "shadow-sm",
-                                        "sm:text-sm",
-                                        "dark:text-slate-300",
-                                        "dark:border-gray-600",
-                                        "dark:bg-gray-900",
-                                    )}
-                                    rows="4"
-                                />
-                            </label>
-
-                            <div class="mt-1.5 flex items-center justify-end gap-2">
-                                <button
-                                    onClick={() => updateState({ text: "" })}
-                                    type="button"
-                                    class="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                                >
-                                    Clear
-                                </button>
-
-                                <button
-                                    onClick={() => runProgram()}
-                                    type="button"
-                                    class="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-                                >
-                                    Run
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => runProgram()}
+                                type="button"
+                                class="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                            >
+                                Run
+                            </button>
                         </div>
-                    </section>
+                    </div>
+                </section>
 
-                    {/* Counter Value */}
-                    <ValueContainer
-                        header={"Counter Value"}
-                        isLoading={isLoading}
-                        disabled={state.success === false}
-                        disabledMessage={"Invalid Syntax"}
-                    >
-                        {state.counter}
-                    </ValueContainer>
+                {/* Counter Value */}
+                <ValueContainer
+                    header={"Counter Value"}
+                    isLoading={isLoading}
+                    disabled={state.success === false}
+                    disabledMessage={"Invalid Syntax"}
+                >
+                    {state.counter}
+                </ValueContainer>
 
-                    {/*
+                {/*
                     but only if we printed.
                     > 2 because json escaped empty string is ""
                     Console Log
                     */}
-                    {
-                        <ValueContainer
-                            disabled={
-                                state.success === false ||
-                                state.printed === false
-                            }
-                            disabledMessage={
-                                state.success === false
-                                    ? "Invalid Syntax"
-                                    : "No Print Instructions"
-                            }
-                            header={"Print Output"}
-                            isLoading={isLoading}
-                            value={state.log}
-                        >
-                            {state.log}
-                        </ValueContainer>
-                    }
-                </div>
+                {
+                    <ValueContainer
+                        disabled={
+                            state.success === false || state.printed === false
+                        }
+                        disabledMessage={
+                            state.success === false
+                                ? "Invalid Syntax"
+                                : "No Print Instructions"
+                        }
+                        header={"Print Output"}
+                        isLoading={isLoading}
+                        value={state.log}
+                    >
+                        {state.log}
+                    </ValueContainer>
+                }
 
-                {/* Examples */}
+                {/* Instructions */}
                 <section
                     className={mergeClassNames(
-                        "px-(--spacing-sm)",
+                        "instructions",
                         "flex",
                         "flex-col",
                         "gap-y-(--spacing-sm)",
                     )}
                 >
-                    <h2 className={mergeClassNames("text-lg", "font-semibold")}>
-                        Examples
-                    </h2>
+                    <Header>Instructions</Header>
+
+                    <ul className={mergeClassNames("gap-y-(--spacing-sm)")}>
+                        <Li>
+                            <Code>+</Code> increments the counter
+                        </Li>
+                        <Li>
+                            <Code>-</Code> decrements it
+                        </Li>
+                        <Li>
+                            <Code>[</Code> opening block of a C-style{" "}
+                            <Code>while</Code> loop
+                        </Li>
+                        <Li>
+                            <Code>]</Code> while closing block
+                        </Li>
+                        <Li>
+                            <Code>{"{"}</Code> opening block of <Code>if</Code>
+                        </Li>
+                        <Li>
+                            <Code>{"}"}</Code> if closing block
+                        </Li>
+                        <Li>
+                            <Code>&gt;</Code> does nothing but advance the read
+                            head
+                            <span className="ml-1 text-slate-400">
+                                (think Python <Code>pass</Code>)
+                            </span>
+                        </Li>
+                        <Li>
+                            <Code>!</Code> prints the current counter as an
+                            ASCII character 😉
+                        </Li>
+                    </ul>
+                </section>
+
+                {/* Examples */}
+                <section
+                    className={mergeClassNames(
+                        "flex",
+                        "flex-col",
+                        "gap-y-(--spacing-sm)",
+                    )}
+                >
+                    <Header>Examples</Header>
                     <ul
                         className={mergeClassNames(
                             "list-['👉🏽']",
