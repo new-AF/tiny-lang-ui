@@ -8,6 +8,8 @@ const Code = ({ children }) => {
     return (
         <code
             className={mergeClassNames(
+                "align-middle",
+                "text-sm",
                 "px-(--spacing-xs)",
                 "py-1",
                 "bg-slate-700",
@@ -20,12 +22,17 @@ const Code = ({ children }) => {
 };
 
 const Li = ({ children }) => {
-    return <li className={mergeClassNames("py-(--spacing-sm)")}>{children}</li>;
+    return (
+        <li className={mergeClassNames("py-(--spacing-xs)", "text-sm")}>
+            {children}
+        </li>
+    );
 };
 
 const Badge = ({ success, children }) => {
     const classes = mergeClassNames(
         "text-xs",
+        "font-medium",
         "inline",
         "rounded-md",
         "ml-1",
@@ -53,18 +60,18 @@ const Badge = ({ success, children }) => {
 const Header = ({ isLoading, success, children }) => {
     const badge = (() => {
         if (success === true) {
-            return <Badge success={true}>Valid Syntax</Badge>;
+            return <Badge success={true}>Has Valid Syntax</Badge>;
         }
 
         if (success === false) {
-            return <Badge success={false}>Invalid Syntax</Badge>;
+            return <Badge success={false}>Has Invalid Syntax</Badge>;
         }
     })();
 
     const loadingElement = <div className={mergeClassNames("loader")} />;
 
     return (
-        <h2 className={mergeClassNames("text-lg", "font-semibold")}>
+        <h2 className={mergeClassNames("text-base", "font-semibold")}>
             {children} {isLoading ? loadingElement : badge}
         </h2>
     );
@@ -83,6 +90,9 @@ const ValueContainer = ({
     return (
         <section
             className={mergeClassNames(
+                "leading-tight",
+                "font-normal",
+                "text-sm",
                 //
                 disabled === true ? "opacity-40 saturate-50" : false,
                 //
@@ -191,6 +201,7 @@ export const App = () => {
                 }}
                 key={input.slice(0, 10)}
                 className={mergeClassNames(
+                    "text-sm",
                     "break-all",
                     "font-mono",
                     "list-inside",
@@ -209,11 +220,11 @@ export const App = () => {
                 {/* expectedOutput */}
                 <span
                     className={mergeClassNames(
+                        "text-xs",
                         "block",
                         "mt-(--spacing-xs)",
                         "w-[max-content]",
                         "text-slate-500",
-                        "text-sm",
                         "rounded-md",
                         "px-(--spacing-xs)",
                         "py-[0.1em]",
@@ -239,7 +250,7 @@ export const App = () => {
                     "pt-(--spacing-md)",
                 )}
             >
-                <h1 className={mergeClassNames("text-3xl", "font-bold")}>
+                <h1 className={mergeClassNames("text-3xl", "font-semibold")}>
                     Tiny Lang
                 </h1>
             </header>
@@ -276,7 +287,7 @@ export const App = () => {
                         )}
                     >
                         <label
-                            for="program"
+                            htmlFor="program"
                             className={mergeClassNames(
                                 "flex",
                                 "flex-col",
@@ -296,6 +307,7 @@ export const App = () => {
                                 }
                                 id="program"
                                 className={mergeClassNames(
+                                    "text-sm",
                                     "font-mono",
                                     "p-(--spacing-sm)",
                                     "mt-0.5",
@@ -312,11 +324,11 @@ export const App = () => {
                             />
                         </label>
 
-                        <div class="mt-1.5 flex items-center justify-end gap-2">
+                        <div className="mt-1.5 flex items-center justify-end gap-2">
                             <button
                                 onClick={() => updateState({ text: "" })}
                                 type="button"
-                                class="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                                className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
                             >
                                 Clear
                             </button>
@@ -324,7 +336,7 @@ export const App = () => {
                             <button
                                 onClick={() => runProgram()}
                                 type="button"
-                                class="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
+                                className="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
                             >
                                 Run
                             </button>
@@ -374,9 +386,14 @@ export const App = () => {
                         "gap-y-(--spacing-sm)",
                     )}
                 >
-                    <Header>Instructions</Header>
+                    <Header>Syntax Instructions</Header>
 
-                    <ul className={mergeClassNames("gap-y-(--spacing-sm)")}>
+                    <ul
+                        className={mergeClassNames(
+                            "gap-y-(--spacing-sm)",
+                            "[&>li>code]:mr-(--spacing-xs)",
+                        )}
+                    >
                         <Li>
                             <Code>+</Code> increments the counter
                         </Li>
@@ -433,13 +450,17 @@ export const App = () => {
             </main>
             <footer
                 className={mergeClassNames(
+                    "text-sm",
                     "text-center",
                     "py-(--spacing-sm)",
                     "text-slate-400",
                 )}
             >
                 By{" "}
-                <a href="https://af-dev.com/blog/i-built-a-tiny-programming-language-from-scratch">
+                <a
+                    href="https://af-dev.com/blog/i-built-a-tiny-programming-language-from-scratch"
+                    className={mergeClassNames("font-medium")}
+                >
                     Abdullah Fatota
                 </a>
             </footer>
