@@ -429,7 +429,8 @@ export const App = () => {
                             <Code no-margin>while</Code> loop. If the counter is
                             zero, we skip over the loop and onto the next
                             instruction. If the counter is non-zero the loop
-                            runs.
+                            runs. You can read it as <Code>while non-zero</Code>{" "}
+                            execute these inner statements.
                         </Li>
                         <Li>
                             <Code mr-only>]</Code> while closing block.
@@ -438,7 +439,9 @@ export const App = () => {
                             <Code mr-only>{"{"}</Code> opening block of an{" "}
                             <Code>if</Code> statement. If the counter is zero we
                             skip its contents. If the coutner is non-zero we
-                            executre the contents <strong>once</strong>.
+                            executre the contents <strong>once</strong>. You can
+                            read it as <Code>if non-zero</Code> execute inner
+                            statements.
                         </Li>
                         <Li>
                             <Code mr-only>{"}"}</Code> if closing block.
