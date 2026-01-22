@@ -21,9 +21,17 @@ const Code = ({ children }) => {
     );
 };
 
-const Li = ({ children }) => {
+const Li = ({ children, className, ...rest }) => {
     return (
-        <li className={mergeClassNames("py-(--spacing-xs)", "text-sm")}>
+        <li
+            {...rest}
+            className={mergeClassNames(
+                "px-(--spacing-sm)",
+                "py-(--spacing-xs)",
+                "text-sm",
+                className,
+            )}
+        >
             {children}
         </li>
     );
@@ -74,6 +82,31 @@ const Header = ({ isLoading, success, children }) => {
         <h2 className={mergeClassNames("text-base", "font-semibold")}>
             {children} {isLoading ? loadingElement : badge}
         </h2>
+    );
+};
+
+const ExpectedOutput = ({ children }) => {
+    return (
+        <span
+            className={mergeClassNames(
+                "text-xs",
+                "block",
+                "mt-(--spacing-xs)",
+                "w-[max-content]",
+                "text-slate-500",
+                "rounded-md",
+                "px-(--spacing-xs)",
+                "py-[0.1em]",
+            )}
+        >
+            <span className={mergeClassNames("font-medium", "text-slate-400")}>
+                (expected output:
+            </span>{" "}
+            <span className={mergeClassNames("font-mono", "text-slate-200")}>
+                {children}
+            </span>
+            )
+        </span>
     );
 };
 
@@ -188,56 +221,6 @@ export const App = () => {
 
     // whener user types in something
     useEffect(runProgram, [state.text]);
-
-    const examples = Examples.map(({ input, expectedOutput }) => {
-        return (
-            <li
-                onClick={() => {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: "smooth", // Smooth scroll animation
-                    });
-                    updateState({ text: input });
-                }}
-                key={input.slice(0, 10)}
-                className={mergeClassNames(
-                    "text-sm",
-                    "break-all",
-                    "font-mono",
-                    "list-inside",
-                    "py-(--spacing-sm)",
-                    "rounded-md",
-                    "cursor-pointer",
-                    "transition",
-                    "hover:bg-slate-800",
-                )}
-            >
-                {/* input */}
-                <span className={mergeClassNames("ml-(--spacing-xs)")}>
-                    {input}
-                </span>
-
-                {/* expectedOutput */}
-                <span
-                    className={mergeClassNames(
-                        "text-xs",
-                        "block",
-                        "mt-(--spacing-xs)",
-                        "w-[max-content]",
-                        "text-slate-500",
-                        "rounded-md",
-                        "px-(--spacing-xs)",
-                        "py-[0.1em]",
-                        // lg
-                        "lg:inline",
-                        "lg:ml-(--spacing-sm)",
-                    )}
-                >
-                    (expected output: {expectedOutput})
-                </span>
-            </li>
-        );
-    });
 
     /* return */
     return (
@@ -444,7 +427,45 @@ export const App = () => {
                             "gap-y-(--spacing-sm)",
                         )}
                     >
-                        {examples}
+                        {Examples.map(({ input, expectedOutput }) => {
+                            return (
+                                <Li
+                                    onClick={() => {
+                                        window.scrollTo({
+                                            top: 0,
+                                            behavior: "smooth", // Smooth scroll animation
+                                        });
+                                        updateState({ text: input });
+                                    }}
+                                    key={input.slice(0, 10)}
+                                    className={mergeClassNames(
+                                        "text-sm",
+                                        "break-all",
+                                        "font-mono",
+                                        "list-inside",
+                                        "py-(--spacing-sm)",
+                                        "rounded-md",
+                                        "cursor-pointer",
+                                        "transition",
+                                        "hover:bg-slate-800",
+                                    )}
+                                >
+                                    {/* input */}
+                                    <span
+                                        className={mergeClassNames(
+                                            "ml-(--spacing-xs)",
+                                        )}
+                                    >
+                                        {input}
+                                    </span>
+
+                                    {/* expectedOutput */}
+                                    <ExpectedOutput>
+                                        {expectedOutput}
+                                    </ExpectedOutput>
+                                </Li>
+                            );
+                        })}
                     </ul>
                 </section>
             </main>
