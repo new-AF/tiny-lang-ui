@@ -27,6 +27,7 @@ const Li = ({ children, className, ...rest }) => {
         <li
             {...rest}
             className={mergeClassNames(
+                "leading-relaxed",
                 "px-(--spacing-sm)",
                 "py-(--spacing-xs)",
                 "text-sm",
@@ -115,6 +116,7 @@ const Paragraph = ({ children }) => {
     return (
         <p
             className={mergeClassNames(
+                "leading-relaxed",
                 "text-slate-300",
                 "text-sm",
                 "break-all",
