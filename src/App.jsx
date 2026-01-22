@@ -391,7 +391,7 @@ export const App = () => {
 
                     <Paragraph>
                         It has a single counter (initially <Code>0</Code>) and
-                        it consumes a sequence of Instructions, each being a
+                        it consumes a sequence of instructions, each being a
                         1-length character which modifies this counter.
                     </Paragraph>
 
