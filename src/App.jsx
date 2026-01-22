@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { execute, MalformedInputError } from "./interpreter/execute";
 import { useEffect } from "react";
 
-const Code = ({ children }) => {
+const Code = ({ children, "mr-only": mrOnly }) => {
     return (
         <code
             className={mergeClassNames(
@@ -14,6 +14,7 @@ const Code = ({ children }) => {
                 "py-1",
                 "bg-slate-700",
                 "rounded-md",
+                mrOnly ? "mr-[0.1em]" : "mx-[0.1em]",
             )}
         >
             {children}
@@ -416,41 +417,42 @@ export const App = () => {
                 >
                     <Header>Syntax Reference</Header>
 
-                    <ul
-                        className={mergeClassNames(
-                            "gap-y-(--spacing-sm)",
-                            "[&>li>code]:mr-(--spacing-xs)",
-                        )}
-                    >
+                    <ul className={mergeClassNames("gap-y-(--spacing-sm)")}>
                         <Li>
-                            <Code>+</Code> increments the counter
+                            <Code mr-only>+</Code> increments the counter
                         </Li>
                         <Li>
-                            <Code>-</Code> decrements it
+                            <Code mr-only>-</Code> decrements it
                         </Li>
                         <Li>
-                            <Code>[</Code> opening block of a C-style{" "}
-                            <Code>while</Code> loop
+                            <Code mr-only>[</Code> opening block of a C-style{" "}
+                            <Code no-margin>while</Code> loop. If the counter is
+                            zero, we skip over the loop and onto the next
+                            instruction. If the counter is non-zero the loop
+                            runs.
                         </Li>
                         <Li>
-                            <Code>]</Code> while closing block
+                            <Code mr-only>]</Code> while closing block.
                         </Li>
                         <Li>
-                            <Code>{"{"}</Code> opening block of <Code>if</Code>
+                            <Code mr-only>{"{"}</Code> opening block of an{" "}
+                            <Code>if</Code> statement. If the counter is zero we
+                            skip its contents. If the coutner is non-zero we
+                            executre the contents <strong>once</strong>.
                         </Li>
                         <Li>
-                            <Code>{"}"}</Code> if closing block
+                            <Code mr-only>{"}"}</Code> if closing block.
                         </Li>
                         <Li>
-                            <Code>&gt;</Code> does nothing but advance the read
-                            head
+                            <Code mr-only>&gt;</Code> does nothing but advance
+                            the read head
                             <span className="ml-1 text-slate-400">
                                 (think Python <Code>pass</Code>)
                             </span>
                         </Li>
                         <Li>
-                            <Code>!</Code> prints the current counter as an
-                            ASCII character.
+                            <Code mr-only>!</Code> prints the current counter as
+                            an ASCII character.
                         </Li>
                     </ul>
                 </section>
