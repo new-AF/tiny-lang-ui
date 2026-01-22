@@ -110,6 +110,14 @@ const ExpectedOutput = ({ children }) => {
     );
 };
 
+const Paragraph = ({ children }) => {
+    return (
+        <p className={mergeClassNames("text-slate-300", "text-sm")}>
+            {children}
+        </p>
+    );
+};
+
 // Console Log. Counter Value
 const ValueContainer = ({
     header,
@@ -360,16 +368,53 @@ export const App = () => {
                     </ValueContainer>
                 }
 
-                {/* Instructions */}
+                {/* Description */}
                 <section
                     className={mergeClassNames(
-                        "instructions",
                         "flex",
                         "flex-col",
                         "gap-y-(--spacing-sm)",
                     )}
                 >
-                    <Header>Syntax Instructions</Header>
+                    <Header>Description</Header>
+
+                    <Paragraph>
+                        <i>Tiny Lang</i> is a <i>non-turing</i> programming
+                        language, desinged by yours truly as a solution to an
+                        AdventJS 2025{" "}
+                        <a href="https://adventjs.dev/challenges/2025/25">
+                            challenge
+                        </a>
+                        . Its syntax is heavily inspired by <i>BrainF---</i>
+                    </Paragraph>
+
+                    <Paragraph>
+                        It has a single counter (initially <Code>0</Code>) and
+                        it consumes a sequence of Instructions, each being a
+                        1-length character which modifies this counter.
+                    </Paragraph>
+
+                    <Paragraph>
+                        I further extended the language by adding ability to
+                        print, this is done by the <Code>!</Code> instruction.
+                        You can learn more about the backstory and inner
+                        workings of the interpreter in{" "}
+                        <a href="https://af-dev.com/blog/i-built-a-tiny-programming-language-from-scratch">
+                            my article
+                        </a>{" "}
+                        😉
+                    </Paragraph>
+                </section>
+
+                {/* Syntax */}
+                <section
+                    className={mergeClassNames(
+                        "flex",
+                        "flex-col",
+                        "gap-y-(--spacing-sm)",
+                    )}
+                >
+                    <Header>Syntax Reference</Header>
 
                     <ul
                         className={mergeClassNames(
@@ -405,7 +450,7 @@ export const App = () => {
                         </Li>
                         <Li>
                             <Code>!</Code> prints the current counter as an
-                            ASCII character 😉
+                            ASCII character.
                         </Li>
                     </ul>
                 </section>
@@ -418,7 +463,11 @@ export const App = () => {
                         "gap-y-(--spacing-sm)",
                     )}
                 >
-                    <Header>Examples</Header>
+                    <Header>Try These Examples</Header>
+                    <Paragraph>
+                        Click on an example program to load it and see its
+                        result.
+                    </Paragraph>
                     <ul
                         className={mergeClassNames(
                             "list-['👉🏽']",
