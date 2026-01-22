@@ -113,7 +113,13 @@ const ExpectedOutput = ({ children }) => {
 
 const Paragraph = ({ children }) => {
     return (
-        <p className={mergeClassNames("text-slate-300", "text-sm")}>
+        <p
+            className={mergeClassNames(
+                "text-slate-300",
+                "text-sm",
+                "break-all",
+            )}
+        >
             {children}
         </p>
     );
@@ -510,6 +516,7 @@ export const App = () => {
                                     <span
                                         className={mergeClassNames(
                                             "ml-(--spacing-xs)",
+                                            "[overflow-wrap:anywhere]",
                                         )}
                                     >
                                         {input}
