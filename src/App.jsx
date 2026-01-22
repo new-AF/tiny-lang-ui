@@ -119,7 +119,7 @@ const Paragraph = ({ children }) => {
                 "leading-relaxed",
                 "text-slate-300",
                 "text-sm",
-                "break-all",
+                "break-word",
             )}
         >
             {children}
@@ -389,7 +389,7 @@ export const App = () => {
 
                     <Paragraph>
                         <i>Tiny Lang</i> is a <i>non-turing</i> programming
-                        language, desinged by yours truly as a solution to an
+                        language, designed by yours truly as a solution to an
                         AdventJS 2025{" "}
                         <a href="https://adventjs.dev/challenges/2025/25">
                             challenge
@@ -532,6 +532,30 @@ export const App = () => {
                             );
                         })}
                     </ul>
+                </section>
+
+                <section
+                    className={mergeClassNames(
+                        "flex",
+                        "flex-col",
+                        "gap-y-(--spacing-sm)",
+                    )}
+                >
+                    <Header>Some Useful Program(s)</Header>
+
+                    <Paragraph>
+                        Besides Hello World, here's another non-trivial program,
+                        printing all the even numbers from 10 to 0 inclusive.
+                    </Paragraph>
+
+                    <Paragraph>
+                        We cheated a bit by printing <Code>1</Code>
+                        <Code>0</Code> and space (<Code> </Code>) as individual
+                        ASCII characters because we had to as they are two
+                        characters, and then doing the actual smart portion of
+                        the code using <Code>while</Code> to print{" "}
+                        <Code>8 - 0</Code> (ASCII values 56 - 48)
+                    </Paragraph>
                 </section>
             </main>
             <footer
