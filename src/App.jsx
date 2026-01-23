@@ -22,15 +22,26 @@ const Code = ({ children, "mr-only": mrOnly }) => {
     );
 };
 
-const Li = ({ children, className, ...rest }) => {
+const Li = ({ children, className, clickable, ...rest }) => {
     return (
         <li
             {...rest}
             className={mergeClassNames(
+                "text-sm",
+                "break-all",
+                "list-inside",
+                "py-(--spacing-sm)",
+                "rounded-md",
                 "leading-relaxed",
                 "px-(--spacing-sm)",
                 "py-(--spacing-xs)",
-                "text-sm",
+                clickable
+                    ? mergeClassNames(
+                          "cursor-pointer",
+                          "transition",
+                          "hover:bg-slate-800",
+                      )
+                    : false,
                 className,
             )}
         >
@@ -491,71 +502,54 @@ export const App = () => {
                             "gap-y-(--spacing-sm)",
                         )}
                     >
-                        {Examples.map(({ input, expectedOutput }) => {
-                            return (
-                                <Li
-                                    onClick={() => {
-                                        window.scrollTo({
-                                            top: 0,
-                                            behavior: "smooth", // Smooth scroll animation
-                                        });
-                                        updateState({ text: input });
-                                    }}
-                                    key={input.slice(0, 10)}
-                                    className={mergeClassNames(
-                                        "text-sm",
-                                        "break-all",
-                                        "font-mono",
-                                        "list-inside",
-                                        "py-(--spacing-sm)",
-                                        "rounded-md",
-                                        "cursor-pointer",
-                                        "transition",
-                                        "hover:bg-slate-800",
-                                    )}
-                                >
-                                    {/* input */}
-                                    <span
-                                        className={mergeClassNames(
-                                            "ml-(--spacing-xs)",
-                                            "[overflow-wrap:anywhere]",
-                                        )}
+                        {Examples.map(
+                            ({ input, expectedOutput, description }) => {
+                                return (
+                                    <Li
+                                        clickable
+                                        onClick={() => {
+                                            window.scrollTo({
+                                                top: 0,
+                                                behavior: "smooth", // Smooth scroll animation
+                                            });
+                                            updateState({ text: input });
+                                        }}
+                                        key={input.slice(0, 10)}
+                                        className={mergeClassNames("font-mono")}
                                     >
-                                        {input}
-                                    </span>
+                                        {/* input */}
+                                        <span
+                                            className={mergeClassNames(
+                                                "ml-(--spacing-xs)",
+                                                "[overflow-wrap:anywhere]",
+                                            )}
+                                        >
+                                            {input}
+                                        </span>
 
-                                    {/* expectedOutput */}
-                                    <ExpectedOutput>
-                                        {expectedOutput}
-                                    </ExpectedOutput>
-                                </Li>
-                            );
-                        })}
+                                        {/* expectedOutput */}
+                                        <ExpectedOutput>
+                                            {expectedOutput}
+                                        </ExpectedOutput>
+
+                                        {/* description */}
+                                        {description && (
+                                            <span
+                                                className={mergeClassNames(
+                                                    "px-(--spacing-xs)",
+                                                    "!font-normal",
+                                                    "text-slate-500",
+                                                    "text-xs",
+                                                )}
+                                            >
+                                                ({description})
+                                            </span>
+                                        )}
+                                    </Li>
+                                );
+                            },
+                        )}
                     </ul>
-                </section>
-
-                <section
-                    className={mergeClassNames(
-                        "flex",
-                        "flex-col",
-                        "gap-y-(--spacing-sm)",
-                    )}
-                >
-                    <Header>Some Useful Program(s)</Header>
-
-                    <Paragraph>
-                        Besides Hello World, here's another non-trivial program,
-                        printing all the even numbers from 10 to 0 inclusive.
-                    </Paragraph>
-
-                    <Paragraph>
-                        We cheated a bit by printing <Code>1</Code>
-                        <Code>0</Code> and space (<Code> </Code>) as individual
-                        ASCII characters because we had to as they are two
-                        characters, and then doing the actual smart portion of
-                        the code using <Code>while</Code> to print{" "}
-                        <Code>8 - 0</Code> (ASCII values 56 - 48)
-                    </Paragraph>
                 </section>
             </main>
             <footer
