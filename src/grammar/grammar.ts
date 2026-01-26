@@ -99,8 +99,57 @@ ifNonZero {
     print
 }
 `;
-const m = tinyLangGrammar.match(userInput);
-console.log({ success: m.succeeded() });
+const matchResult = tinyLangGrammar.match(userInput);
+console.log({ success: matchResult.succeeded() });
 
-const semanticsResult = semantics(m).emit();
+const semanticsResult = semantics(matchResult).emit();
 console.log({ semanticsResult });
+
+const convertCanonicalToHumanReadable = (input: string) => {
+    const getTabs = (count: number) => "\t".repeat(count);
+
+    const indent = (input: string) => {
+        const output = getTabs(currentDepth) + input;
+
+        return output;
+    };
+
+    let currentDepth = 0;
+
+    const output = Array.from(input).map((character) => {
+        if (character === "+") {
+            return indent("counter += 1");
+        }
+        if (character === "[") {
+            currentDepth += 1;
+            return indent("whileNonZero {");
+        }
+        if (character === "]") {
+            return indent("}");
+        }
+        if (character === ">") {
+            return indent("pass");
+        }
+        if (character === "-") {
+            return "counter -= 1";
+        }
+        if (character === "{") {
+            return "ifNonZero {";
+        }
+        if (character === "}") {
+            return "}";
+        }
+        if (character === "!") {
+            return "print";
+        }
+    });
+
+    const joined = output.join("\n");
+    return joined;
+};
+
+console.log(
+    "convertCanonicalToHumanReadable",
+    "\n",
+    convertCanonicalToHumanReadable("+[+>-]{-!}"),
+);
