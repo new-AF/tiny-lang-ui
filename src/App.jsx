@@ -1,6 +1,6 @@
 import { mergeClassNames } from "simple-merge-class-names";
 import Examples from "./data/Examples.json";
-import { useState, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import { execute, MalformedInputError } from "./interpreter/execute";
 import { useEffect } from "react";
 
@@ -50,7 +50,7 @@ const Li = ({ children, className, clickable, ...rest }) => {
     );
 };
 
-const Badge = ({ success, children }) => {
+const Badge = ({ color, children }) => {
     const classes = mergeClassNames(
         "text-xs",
         "font-medium",
@@ -61,39 +61,35 @@ const Badge = ({ success, children }) => {
         "py-1",
     );
 
-    if (success === true) {
-        return (
-            <aside className={mergeClassNames(classes, "bg-green-800")}>
-                {children}
-            </aside>
-        );
-    }
-
-    if (success === false) {
-        return (
-            <aside className={mergeClassNames(classes, "bg-red-800")}>
-                {children}
-            </aside>
-        );
-    }
+    return (
+        <aside className={mergeClassNames(classes, color)}>{children}</aside>
+    );
 };
 
-const Header = ({ isLoading, success, children }) => {
+const Header = ({ status, children }) => {
     const badge = (() => {
-        if (success === true) {
-            return <Badge success={true}>Has Valid Syntax</Badge>;
+        if (status === "ran") {
+            return (
+                <Badge color="bg-green-800">Completed running (halted)</Badge>
+            );
         }
 
-        if (success === false) {
-            return <Badge success={false}>Has Invalid Syntax</Badge>;
+        if (status === "running") {
+            return (
+                <Badge color="bg-yellow-900">
+                    Running... <div className={mergeClassNames("loader")} />
+                </Badge>
+            );
+        }
+
+        if (status === "error") {
+            return <Badge color="bg-red-800">Has Invalid Syntax</Badge>;
         }
     })();
 
-    const loadingElement = <div className={mergeClassNames("loader")} />;
-
     return (
         <h2 className={mergeClassNames("text-base", "font-semibold")}>
-            {children} {isLoading ? loadingElement : badge}
+            {children} {badge}
         </h2>
     );
 };
@@ -141,11 +137,9 @@ const Paragraph = ({ children }) => {
 // Console Log. Counter Value
 const ValueContainer = ({
     header,
-    isLoading,
     children,
     disabled,
     disabledMessage,
-    success,
     className,
 }) => {
     return (
@@ -167,9 +161,7 @@ const ValueContainer = ({
                 className,
             )}
         >
-            <Header isLoading={isLoading} success={success}>
-                {header}
-            </Header>
+            <Header>{header}</Header>
 
             <div
                 className={mergeClassNames(
@@ -192,12 +184,75 @@ const ValueContainer = ({
 
 export const App = () => {
     const [state, setState] = useState({
-        success: true, // is input valid syntax (has any exception occurred)
-        printed: false, // did we print something
+        status: "ran",
+        didWePrint: false, // did we print something
         text: "",
         counter: 0,
         log: "", // accumulated characters, reset manually
     });
+
+    // build the accumulator
+    const printArray = [];
+
+    // closure, reference `array` from inside function
+    const accumulate = (character) => {
+        printArray.push(character);
+    };
+
+    // executeWorker.ts
+    const workerRef = useRef(null);
+
+    const runCode = () => {
+        if (workerRef.current) {
+            workerRef.current.terminate();
+        }
+
+        // starts executing immediately?
+        const worker = new Worker(
+            new URL("./executeWorker.ts", import.meta.url),
+            { type: "module" },
+        );
+        workerRef.current = worker;
+        worker.postMessage({ code: state.text });
+
+        console.log({ worker });
+
+        updateState({
+            status: "running",
+        });
+
+        worker.onmessage = (event) => {
+            const { character, message, result } = event.data;
+
+            if (message === "accumulate") {
+                accumulate(character);
+            }
+
+            if (message === "done") {
+                const string = printArray.join("");
+                const escaped = JSON.stringify(string);
+                const didWePrint = printArray.length > 0; // did we print something
+
+                updateState({
+                    status: "ran", // ran | running | error
+                    didWePrint,
+                    counter: result,
+                    log: escaped,
+                });
+
+                worker.terminate();
+                workerRef.current = null;
+            }
+
+            if (message === "error") {
+                updateState({
+                    status: "error",
+                });
+                worker.terminate();
+                workerRef.current = null;
+            }
+        };
+    };
 
     // except log, accumulate it
     const updateState = (obj) => {
@@ -212,13 +267,7 @@ export const App = () => {
     // crux of the app
     const runProgram = () => {
         startTransition(() => {
-            // build the accumulator
-            const array = [];
-
-            // closure, reference `array` from inside function
-            const accumulate = (character) => {
-                array.push(character);
-            };
+            updateState({ status: "running" });
 
             // run core interpreter
             // accumulate characters, and get single value counter
@@ -226,20 +275,20 @@ export const App = () => {
             try {
                 value = execute(state.text, accumulate);
 
-                const string = array.join("");
+                const string = printArray.join("");
                 const escaped = JSON.stringify(string);
-                const printed = array.length > 0; // did we print something
+                const didWePrint = printArray.length > 0; // did we print something
 
-                // if we printed, log that, otherwise, escape ascii value
+                // if we didWePrint, log that, otherwise, escape ascii value
                 updateState({
-                    success: true,
-                    printed,
+                    status: "ran", // ran | running | error
+                    didWePrint,
                     counter: value,
                     log: escaped,
                 });
             } catch (error) {
                 if (error instanceof MalformedInputError) {
-                    updateState({ success: false });
+                    updateState({ status: "error" });
                 }
             }
 
@@ -248,7 +297,7 @@ export const App = () => {
     };
 
     // whener user types in something
-    useEffect(runProgram, [state.text]);
+    useEffect(runCode, [state.text]);
 
     /* return */
     return (
@@ -305,7 +354,9 @@ export const App = () => {
                                 "gap-y-(--spacing-xs)",
                             )}
                         >
-                            <Header success={state.success}>
+                            <Header
+                                status={isLoading ? "running" : state.status}
+                            >
                                 Your Program
                             </Header>
 
@@ -358,30 +409,30 @@ export const App = () => {
                 {/* Counter Value */}
                 <ValueContainer
                     header={"Counter Value"}
-                    isLoading={isLoading}
-                    disabled={state.success === false}
+                    disabled={state.status === "error"}
                     disabledMessage={"Invalid Syntax"}
                 >
                     {state.counter}
                 </ValueContainer>
 
                 {/*
-                    but only if we printed.
+                    but only if we didWePrint.
                     > 2 because json escaped empty string is ""
                     Console Log
                     */}
                 {
                     <ValueContainer
                         disabled={
-                            state.success === false || state.printed === false
+                            state.state === "error" ||
+                            state.status === "running" ||
+                            state.didWePrint === false
                         }
                         disabledMessage={
-                            state.success === false
+                            state.state === "error"
                                 ? "Invalid Syntax"
                                 : "No Print Instructions"
                         }
                         header={"Print Output"}
-                        isLoading={isLoading}
                         value={state.log}
                     >
                         {state.log}
