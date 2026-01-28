@@ -74,9 +74,11 @@ const Badge = ({ className, children }) => {
     );
 };
 
-const Header = ({ children }) => {
+const Header = ({ children, className }) => {
     return (
-        <h2 className={mergeClassNames("text-base", "font-semibold")}>
+        <h2
+            className={mergeClassNames("text-base", "font-semibold", className)}
+        >
             {children}
         </h2>
     );
@@ -137,7 +139,9 @@ const ValueContainer = ({
                 "font-normal",
                 "text-sm",
                 //
-                disabled === true ? "opacity-40 saturate-50" : false,
+                disabled === true
+                    ? mergeClassNames("opacity-40", "saturate-50")
+                    : false,
                 //
                 "transition-all",
                 "duration-300",
@@ -149,11 +153,12 @@ const ValueContainer = ({
                 className,
             )}
         >
-            <Header>{header}</Header>
+            <Header className={disabled === true ? "!font-normal" : false}>
+                {header}
+            </Header>
 
             <div
                 className={mergeClassNames(
-                    disabled ? "italic" : false,
                     // hacked this
                     "max-w-[90vw]",
                     "overflow-x-auto",
@@ -170,33 +175,56 @@ const ValueContainer = ({
     );
 };
 
-const Textarea = ({ className, children, ...rest }) => (
-    <textarea
-        {...rest}
-        className={mergeClassNames(
-            "text-sm",
-            "font-mono",
-            "p-(--spacing-sm)",
-            "mt-0.5",
-            "w-full",
-            "resize-none",
-            "rounded-md",
-            "border-gray-300",
-            "shadow-sm",
-            "dark:text-slate-300",
-            "dark:border-gray-600",
-            "dark:bg-gray-900",
-            className,
-        )}
-    />
+const Textarea = ({ className, children, clearButtonOnClick, ...rest }) => (
+    <>
+        <textarea
+            spellCheck="false"
+            rows={4}
+            className={mergeClassNames(
+                "text-sm",
+                "font-mono",
+                "p-(--spacing-sm)",
+                "mt-0.5",
+                "w-full",
+                "resize-none",
+                "rounded-md",
+                "shadow-sm",
+                "text-slate-300",
+                "bg-gray-900",
+
+                // disable white perimeter
+                "focus:outline-none",
+                "focus:ring-2",
+                "focus:ring-offset-0",
+                "focus:shadow-none",
+
+                className,
+            )}
+            {...rest}
+        />
+
+        <div className="mt-0.5 flex items-center justify-end gap-2">
+            <button
+                onClick={clearButtonOnClick}
+                type="button"
+                className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+            >
+                Clear
+            </button>
+        </div>
+    </>
 );
 
 export const App = () => {
+    const defaultExample =
+        Examples.find(({ showAsDefault }) => showAsDefault === true).input ??
+        "";
+
     const [state, setState] = useState({
         status: "ran",
         didWePrint: false, // did we print something
-        canonicalSyntax: "",
-        humanSyntax: "",
+        canonicalSyntax: defaultExample,
+        humanSyntax: convertToHumanSyntax(defaultExample),
         counter: 0,
         log: "", // accumulated characters, reset manually
     });
@@ -359,6 +387,7 @@ export const App = () => {
                         <label
                             htmlFor="program"
                             className={mergeClassNames(
+                                // "outline",
                                 "flex",
                                 "flex-col",
                                 "gap-y-(--spacing-xs)",
@@ -403,17 +432,36 @@ export const App = () => {
                                               }
                                             : {})}
                                 />
-                                <span
-                                    className={mergeClassNames(
-                                        "text-xs",
-                                        "text-slate-400",
-                                    )}
-                                >
-                                    Canonical Syntax
-                                </span>
                             </Header>
 
+                            <span
+                                className={mergeClassNames(
+                                    "mt-(--spacing-xs)",
+                                    "text-xs",
+                                    "text-slate-400",
+                                )}
+                            >
+                                Canonical Syntax
+                            </span>
+
                             <Textarea
+                                className={
+                                    state.status === "ran"
+                                        ? mergeClassNames(
+                                              "focus-visible:ring-emerald-800",
+                                          )
+                                        : state.status === "running"
+                                          ? mergeClassNames(
+                                                "focus-visible:ring-amber-800",
+                                            )
+                                          : state.status === "error"
+                                            ? mergeClassNames(
+                                                  "focus-visible:ring-rose-800",
+                                              )
+                                            : mergeClassNames(
+                                                  "focus-visible:ring-gray-600",
+                                              )
+                                }
                                 value={state.canonicalSyntax}
                                 onInput={(event) => {
                                     const canonicalSyntax = event.target.value;
@@ -426,41 +474,25 @@ export const App = () => {
                                         humanSyntax,
                                     });
                                 }}
-                                id="program"
-                                rows="4"
+                                clearButtonOnClick={() =>
+                                    updateState({ text: "" })
+                                }
+                            />
+
+                            <span
+                                className={mergeClassNames(
+                                    "text-xs",
+                                    "text-slate-400",
+                                )}
+                            >
+                                Human Readable Syntax
+                            </span>
+                            <Textarea
+                                rows={10}
+                                value={state.humanSyntax}
+                                onClick={(event) => {}}
                             />
                         </label>
-
-                        <div className="mt-1.5 flex items-center justify-end gap-2">
-                            <button
-                                onClick={() => updateState({ text: "" })}
-                                type="button"
-                                className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                            >
-                                Clear
-                            </button>
-
-                            <button
-                                onClick={() => runProgram()}
-                                type="button"
-                                className="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
-                            >
-                                Run
-                            </button>
-                        </div>
-
-                        <span
-                            className={mergeClassNames(
-                                "text-xs",
-                                "text-slate-400",
-                            )}
-                        >
-                            Human Readable Syntax
-                        </span>
-                        <Textarea
-                            value={state.humanSyntax}
-                            onClick={(event) => {}}
-                        />
                     </div>
                 </section>
 

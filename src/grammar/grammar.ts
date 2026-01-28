@@ -126,23 +126,28 @@ export const convertToHumanSyntax = (input: string) => {
             return indent("counter += 1");
         }
         if (character === "[") {
+            const output = indent("whileNonZero {");
             currentDepth += 1;
-            return indent("whileNonZero {");
+            return output;
         }
         if (character === "]") {
+            currentDepth -= 1;
             return indent("}");
         }
         if (character === ">") {
             return indent("pass");
         }
         if (character === "-") {
-            return "counter -= 1";
+            return indent("counter -= 1");
         }
         if (character === "{") {
-            return "ifNonZero {";
+            const output = indent("ifNonZero {");
+            currentDepth += 1;
+            return output;
         }
         if (character === "}") {
-            return "}";
+            currentDepth -= 1;
+            return indent("}");
         }
         if (character === "!") {
             return "print";
