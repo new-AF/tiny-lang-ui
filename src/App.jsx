@@ -3,6 +3,7 @@ import Examples from "./data/Examples.json";
 import { useState, useRef, useTransition } from "react";
 import { execute, MalformedInputError } from "./interpreter/execute";
 import { useEffect } from "react";
+import { convertToHumanSyntax } from "./grammar/grammar";
 
 const Code = ({ children, "mr-only": mrOnly }) => {
     return (
@@ -169,11 +170,33 @@ const ValueContainer = ({
     );
 };
 
+const Textarea = ({ className, children, ...rest }) => (
+    <textarea
+        {...rest}
+        className={mergeClassNames(
+            "text-sm",
+            "font-mono",
+            "p-(--spacing-sm)",
+            "mt-0.5",
+            "w-full",
+            "resize-none",
+            "rounded-md",
+            "border-gray-300",
+            "shadow-sm",
+            "dark:text-slate-300",
+            "dark:border-gray-600",
+            "dark:bg-gray-900",
+            className,
+        )}
+    />
+);
+
 export const App = () => {
     const [state, setState] = useState({
         status: "ran",
         didWePrint: false, // did we print something
-        text: "",
+        canonicalSyntax: "",
+        humanSyntax: "",
         counter: 0,
         log: "", // accumulated characters, reset manually
     });
@@ -200,7 +223,7 @@ export const App = () => {
             { type: "module" },
         );
         workerRef.current = worker;
-        worker.postMessage({ code: state.text });
+        worker.postMessage({ code: state.canonicalSyntax });
 
         console.log({ worker });
 
@@ -260,7 +283,7 @@ export const App = () => {
             // accumulate characters, and get single value counter
             let value;
             try {
-                value = execute(state.text, accumulate);
+                value = execute(state.canonicalSyntax, accumulate);
 
                 const string = printArray.join("");
                 const escaped = JSON.stringify(string);
@@ -284,7 +307,7 @@ export const App = () => {
     };
 
     // whener user types in something
-    useEffect(runCode, [state.text]);
+    useEffect(runCode, [state.canonicalSyntax]);
 
     /* return */
     return (
@@ -380,30 +403,30 @@ export const App = () => {
                                               }
                                             : {})}
                                 />
+                                <span
+                                    className={mergeClassNames(
+                                        "text-xs",
+                                        "text-slate-400",
+                                    )}
+                                >
+                                    Canonical Syntax
+                                </span>
                             </Header>
 
-                            <textarea
-                                value={state.text}
-                                onInput={(event) =>
+                            <Textarea
+                                value={state.canonicalSyntax}
+                                onInput={(event) => {
+                                    const canonicalSyntax = event.target.value;
+
+                                    const humanSyntax =
+                                        convertToHumanSyntax(canonicalSyntax);
+
                                     updateState({
-                                        text: event.target.value,
-                                    })
-                                }
+                                        canonicalSyntax,
+                                        humanSyntax,
+                                    });
+                                }}
                                 id="program"
-                                className={mergeClassNames(
-                                    "text-sm",
-                                    "font-mono",
-                                    "p-(--spacing-sm)",
-                                    "mt-0.5",
-                                    "w-full",
-                                    "resize-none",
-                                    "rounded-md",
-                                    "border-gray-300",
-                                    "shadow-sm",
-                                    "dark:text-slate-300",
-                                    "dark:border-gray-600",
-                                    "dark:bg-gray-900",
-                                )}
                                 rows="4"
                             />
                         </label>
@@ -425,24 +448,44 @@ export const App = () => {
                                 Run
                             </button>
                         </div>
+
+                        <span
+                            className={mergeClassNames(
+                                "text-xs",
+                                "text-slate-400",
+                            )}
+                        >
+                            Human Readable Syntax
+                        </span>
+                        <Textarea
+                            value={state.humanSyntax}
+                            onClick={(event) => {}}
+                        />
                     </div>
                 </section>
 
-                {/* Counter Value */}
-                <ValueContainer
-                    header={"Counter Value"}
-                    disabled={state.status === "error"}
-                    disabledMessage={"Invalid Syntax"}
+                <div
+                    className={mergeClassNames(
+                        "flex",
+                        "flex-col",
+                        "gap-y-(--spacing-md)",
+                    )}
                 >
-                    {state.counter}
-                </ValueContainer>
+                    {/* Counter Value */}
+                    <ValueContainer
+                        header={"Counter Value"}
+                        disabled={state.status === "error"}
+                        disabledMessage={"Invalid Syntax"}
+                    >
+                        {state.counter}
+                    </ValueContainer>
 
-                {/*
+                    {/*
                     but only if we didWePrint.
                     > 2 because json escaped empty string is ""
                     Console Log
                     */}
-                {
+
                     <ValueContainer
                         disabled={
                             state.status === "error" ||
@@ -459,8 +502,7 @@ export const App = () => {
                     >
                         {state.log}
                     </ValueContainer>
-                }
-
+                </div>
                 {/* Description */}
                 <section
                     className={mergeClassNames(
@@ -585,9 +627,11 @@ export const App = () => {
                                                 top: 0,
                                                 behavior: "smooth", // Smooth scroll animation
                                             });
-                                            updateState({ text: input });
+                                            updateState({
+                                                canonicalSyntax: input,
+                                            });
                                         }}
-                                        key={input.slice(0, 10)}
+                                        key={expectedOutput}
                                         className={mergeClassNames("font-mono")}
                                     >
                                         {/* input */}

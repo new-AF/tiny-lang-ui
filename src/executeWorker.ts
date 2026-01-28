@@ -1,7 +1,7 @@
 import { execute, MalformedInputError } from "./interpreter/execute.ts";
 
 self.onmessage = (event) => {
-    console.log("From Worker: Hi");
+    // console.log("From Worker: Hi");
 
     const { data } = event;
 

@@ -88,7 +88,8 @@ const emitOperation = {
 
 semantics.addOperation("emit", emitOperation);
 
-const userInput = `counter += 1
+export const convertToCanonicalSyntax = (
+    userInput = `counter += 1
 whileNonZero {
     counter += 1
     pass
@@ -98,14 +99,18 @@ ifNonZero {
     counter -= 1
     print
 }
-`;
-const matchResult = tinyLangGrammar.match(userInput);
-console.log({ success: matchResult.succeeded() });
+`,
+) => {
+    const matchResult = tinyLangGrammar.match(userInput);
+    console.log({ success: matchResult.succeeded() });
 
-const semanticsResult = semantics(matchResult).emit();
-console.log({ semanticsResult });
+    const semanticsResult = semantics(matchResult).emit();
+    console.log({ semanticsResult });
 
-const convertCanonicalToHumanReadable = (input: string) => {
+    return semanticsResult;
+};
+
+export const convertToHumanSyntax = (input: string) => {
     const getTabs = (count: number) => "\t".repeat(count);
 
     const indent = (input: string) => {
@@ -148,8 +153,8 @@ const convertCanonicalToHumanReadable = (input: string) => {
     return joined;
 };
 
-console.log(
+/* console.log(
     "convertCanonicalToHumanReadable",
     "\n",
     convertCanonicalToHumanReadable("+[+>-]{-!}"),
-);
+); */
