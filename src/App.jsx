@@ -50,46 +50,33 @@ const Li = ({ children, className, clickable, ...rest }) => {
     );
 };
 
-const Badge = ({ color, children }) => {
+const Badge = ({ className, children }) => {
     const classes = mergeClassNames(
+        "ml-(--spacing-xs)",
         "text-xs",
         "font-medium",
-        "inline",
+        "inline-flex",
+        "items-center",
+        "gap-x-1",
         "rounded-md",
         "ml-1",
         "px-(--spacing-xs)",
         "py-1",
+        "transition-opacity",
+        "duration-200",
     );
 
     return (
-        <aside className={mergeClassNames(classes, color)}>{children}</aside>
+        <aside className={mergeClassNames(classes, className)}>
+            {children}
+        </aside>
     );
 };
 
-const Header = ({ status, children }) => {
-    const badge = (() => {
-        if (status === "ran") {
-            return (
-                <Badge color="bg-green-800">Completed running (halted)</Badge>
-            );
-        }
-
-        if (status === "running") {
-            return (
-                <Badge color="bg-yellow-900">
-                    Running... <div className={mergeClassNames("loader")} />
-                </Badge>
-            );
-        }
-
-        if (status === "error") {
-            return <Badge color="bg-red-800">Has Invalid Syntax</Badge>;
-        }
-    })();
-
+const Header = ({ children }) => {
     return (
         <h2 className={mergeClassNames("text-base", "font-semibold")}>
-            {children} {badge}
+            {children}
         </h2>
     );
 };
@@ -354,10 +341,45 @@ export const App = () => {
                                 "gap-y-(--spacing-xs)",
                             )}
                         >
-                            <Header
-                                status={isLoading ? "running" : state.status}
-                            >
+                            <Header>
                                 Your Program
+                                <Badge
+                                    {...(state.status === "ran"
+                                        ? {
+                                              className: mergeClassNames(
+                                                  "bg-emerald-800",
+                                                  "text-slate-200",
+                                              ),
+                                              children:
+                                                  "Completed running (halted)",
+                                          }
+                                        : state.status === "error"
+                                          ? {
+                                                className: mergeClassNames(
+                                                    "bg-rose-800",
+                                                    "text-slate-200",
+                                                ),
+                                                children: "Has invalid syntax",
+                                            }
+                                          : state.status === "running"
+                                            ? {
+                                                  className: mergeClassNames(
+                                                      "bg-amber-800",
+                                                      "text-slate-200",
+                                                  ),
+                                                  children: (
+                                                      <>
+                                                          Is running...
+                                                          <div
+                                                              className={mergeClassNames(
+                                                                  "loader",
+                                                              )}
+                                                          />
+                                                      </>
+                                                  ),
+                                              }
+                                            : {})}
+                                />
                             </Header>
 
                             <textarea
