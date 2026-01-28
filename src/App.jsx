@@ -445,12 +445,12 @@ export const App = () => {
                 {
                     <ValueContainer
                         disabled={
-                            state.state === "error" ||
+                            state.status === "error" ||
                             state.status === "running" ||
                             state.didWePrint === false
                         }
                         disabledMessage={
-                            state.state === "error"
+                            state.status === "error"
                                 ? "Invalid Syntax"
                                 : "No Print Instructions"
                         }
