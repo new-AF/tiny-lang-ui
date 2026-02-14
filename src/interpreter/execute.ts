@@ -26,10 +26,10 @@ export const execute = (code: string, printFunction): number => {
         Continue = "Continue",
         Increment = "Increment",
         Decrement = "Decrement",
-        Loop_Start = "Loop_Start",
-        Loop_End = "Loop_End",
-        If_Start = "If_Start",
-        If_End = "If_End",
+        WhileStart = "WhileStart",
+        WhileEnd = "WhileEnd",
+        IfStart = "IfStart",
+        IfEnd = "IfEnd",
     }
 
     const mapStringToTokenType = {
@@ -37,24 +37,21 @@ export const execute = (code: string, printFunction): number => {
         ">": TokenType.Continue,
         "+": TokenType.Increment,
         "-": TokenType.Decrement,
-        "[": TokenType.Loop_Start,
-        "]": TokenType.Loop_End,
-        "{": TokenType.If_Start,
-        "}": TokenType.If_End,
+        "[": TokenType.WhileStart,
+        "]": TokenType.WhileEnd,
+        "{": TokenType.IfStart,
+        "}": TokenType.IfEnd,
     };
 
     /*
-    encode jumps for Loop_Start <-> Loop_End
-    If_Start -> If_End
-    we don't need  If_End <- If_Start because once if reaches end it cannot loop back
+    encode jumps for WhileStart <-> WhileEnd
+    IfStart -> IfEnd
+    we don't need  IfEnd <- IfStart because once if reaches end it cannot loop back
     */
     type JumpTable = Map<number, Token>;
 
     // doesn't have to be a one-length character
     type Token = { type: TokenType; index: number };
-
-    // match [] {} used to build jump tables
-    const stack: Token = [];
 
     // our machine state
     type State = {
@@ -123,7 +120,7 @@ export const execute = (code: string, printFunction): number => {
             };
         },
         // handling looping, check if counter is 0, jump to end of loop, otherwise advance
-        [TokenType.Loop_Start]: (
+        [TokenType.WhileStart]: (
             currentState: State,
             passedJumpTable: JumpTable,
         ): State => {
@@ -136,8 +133,8 @@ export const execute = (code: string, printFunction): number => {
                     raiseMalformedInput();
                 }
 
-                const loopEnd = passedJumpTable.get(readHead);
-                const nextIndex = loopEnd.index;
+                const WhileEnd = passedJumpTable.get(readHead);
+                const nextIndex = WhileEnd.index;
 
                 return { counter, readHead: nextIndex };
             }
@@ -146,7 +143,7 @@ export const execute = (code: string, printFunction): number => {
             return { counter, readHead: readHead + 1 };
         },
         // if counter !== 0 jump to "[" beginning
-        [TokenType.Loop_End]: (
+        [TokenType.WhileEnd]: (
             currentState: State,
             passedJumpTable: JumpTable,
         ): State => {
@@ -168,7 +165,7 @@ export const execute = (code: string, printFunction): number => {
             return { counter, readHead: readHead + 1 };
         },
         // condition check, if counter is 0, jump to end of conidiation, otherwise ++
-        [TokenType.If_Start]: (
+        [TokenType.IfStart]: (
             currentState: State,
             passedJumpTable: JumpTable,
         ): State => {
@@ -191,7 +188,7 @@ export const execute = (code: string, printFunction): number => {
             return { counter, readHead: readHead + 1 };
         },
         // condition cannot loop back, so just advance
-        [TokenType.If_End]: (
+        [TokenType.IfEnd]: (
             currentState: State,
             _passedJumpTable: JumpTable,
         ): State => {
@@ -202,76 +199,96 @@ export const execute = (code: string, printFunction): number => {
     };
 
     // convert all tokens for better readability and debugability
-    const allTokens: Token[] = Array.from(code, (substring, index) => {
+    const tokens: Token[] = Array.from(code, (substring, index) => {
         const type: TokenType = mapStringToTokenType[substring];
 
         const token = { type, index };
         return token;
     });
 
-    // build the jump table
-    const globalJumpTable: JumpTable = new Map<number, Token>();
-
-    for (const token of allTokens) {
-        const { type: tokenType, index } = token;
-        if (
-            tokenType === TokenType.Loop_Start ||
-            tokenType === TokenType.If_Start
-        ) {
-            stack.push(token);
-        }
-        // do it both ways, jump[start] = end, and jump[end]=start
-        else if (tokenType === TokenType.Loop_End) {
-            const loopStart = stack.pop();
-
-            if (loopStart === undefined) {
-                raiseMalformedInput();
-            }
-
-            // malformed input
-            if (loopStart.type !== TokenType.Loop_Start) {
-                raiseMalformedInput();
-            }
-
-            // in case we need to skip over the loop; jump[start] = end
-            globalJumpTable.set(loopStart.index, token);
-
-            // in case we need to loop back; jump[end] = start
-            globalJumpTable.set(index, loopStart);
-        }
-        // only one way jump[if_Start] = if_End; because we cannot go back/loop
-        else if (tokenType === TokenType.If_End) {
-            const ifStart = stack.pop();
-
-            if (ifStart === undefined) {
-                raiseMalformedInput();
-            }
-
-            // malformed input
-            if (ifStart.type !== TokenType.If_Start) {
-                raiseMalformedInput();
-            }
-
-            globalJumpTable.set(ifStart.index, token);
-        }
-    }
-
-    // malformed input, incomplete closing token e.g. "[+"
-    if (stack.length > 0) {
-        raiseMalformedInput();
-    }
-
-    // run the program the program, as long as there are instructions
-    while (currentState.readHead < code.length) {
-        const { type, _ } = allTokens[currentState.readHead];
+    const interpretToken = (
+        currentToken: Token,
+        globalJumpTable: JumpTable,
+    ): State => {
+        const { type, _index } = currentToken;
 
         // invalid character
         if (type === undefined) {
             raiseMalformedInput();
         }
 
-        const transform = tokenTypeToStateFunction[type];
-        const nextState = transform(currentState, globalJumpTable);
+        const transitionFunction = tokenTypeToStateFunction[type];
+        const nextState = transitionFunction(currentState, globalJumpTable);
+
+        return nextState;
+    };
+
+    // build the jump table
+    const buildJumpTable = (tokens: Token[]): JumpTable => {
+        // match [] {} used to build jump tables
+        const stack: Token = [];
+
+        const jumpTable: JumpTable = new Map<number, Token>();
+
+        for (const token of tokens) {
+            const { type: tokenType, index } = token;
+            if (
+                tokenType === TokenType.WhileStart ||
+                tokenType === TokenType.IfStart
+            ) {
+                stack.push(token);
+            }
+            // do it both ways, jump[start] = end, and jump[end]=start
+            else if (tokenType === TokenType.WhileEnd) {
+                const loopStart = stack.pop();
+
+                if (loopStart === undefined) {
+                    raiseMalformedInput();
+                }
+
+                // malformed input
+                if (loopStart.type !== TokenType.WhileStart) {
+                    raiseMalformedInput();
+                }
+
+                // in case we need to skip over the loop; jump[start] = end
+                jumpTable.set(loopStart.index, token);
+
+                // in case we need to loop back; jump[end] = start
+                jumpTable.set(index, loopStart);
+            }
+            // only one way jump[ifStart] = ifEnd; because we cannot go back/loop
+            else if (tokenType === TokenType.IfEnd) {
+                const ifStart = stack.pop();
+
+                if (ifStart === undefined) {
+                    raiseMalformedInput();
+                }
+
+                // malformed input
+                if (ifStart.type !== TokenType.IfStart) {
+                    raiseMalformedInput();
+                }
+
+                jumpTable.set(ifStart.index, token);
+            }
+        }
+
+        // malformed input, incomplete closing token e.g. "[+"
+        if (stack.length > 0) {
+            raiseMalformedInput();
+        }
+
+        return jumpTable;
+    };
+
+    // build the jump table
+    const globalJumpTable = buildJumpTable(tokens);
+
+    // run the program the program, as long as there are instructions
+    while (currentState.readHead < tokens.length) {
+        const currentToken = tokens[currentState.readHead];
+        const nextState = interpretToken(currentToken, globalJumpTable);
         currentState = nextState;
     }
 
