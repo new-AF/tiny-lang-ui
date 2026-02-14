@@ -32,7 +32,8 @@ export const execute = (code: string, printFunction): number => {
         IfEnd = "IfEnd",
     }
 
-    const mapStringToTokenType = {
+    // part of tokenize and for better DX
+    const characterToTokenType = {
         "!": TokenType.Print,
         ">": TokenType.Continue,
         "+": TokenType.Increment,
@@ -200,7 +201,7 @@ export const execute = (code: string, printFunction): number => {
 
     // convert all tokens for better readability and debugability
     const tokens: Token[] = Array.from(code, (substring, index) => {
-        const type: TokenType = mapStringToTokenType[substring];
+        const type: TokenType = characterToTokenType[substring];
 
         const token = { type, index };
         return token;
