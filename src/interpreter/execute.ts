@@ -227,9 +227,9 @@ export const execute = (code: string, printFunction): number => {
     // build the jump table
     const buildJumpTable = (tokens: Token[]): JumpTable => {
         // match [] {} used to build jump tables
-        const stack: Token = [];
+        const stack: Token[] = [];
 
-        const jumpTable: JumpTable = new Map<number, Token>();
+        const jumpTable: JumpTable = new Map();
 
         for (const token of tokens) {
             const { type: tokenType, index } = token;
