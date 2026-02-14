@@ -207,6 +207,7 @@ export const execute = (code: string, printFunction): number => {
         return token;
     });
 
+    // process each token, call transition function, return new state
     const interpretToken = (
         currentToken: Token,
         globalJumpTable: JumpTable,
