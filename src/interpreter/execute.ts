@@ -58,13 +58,13 @@ export const execute = (code: string, printFunction): number => {
 
     // our machine state
     type State = {
-        tapeIndex: number;
-        value: number;
+        readHead: number;
+        counter: number;
     };
 
     let currentState: State = {
-        tapeIndex: 0,
-        value: 0,
+        readHead: 0,
+        counter: 0,
     };
 
     // produce our next state
@@ -74,10 +74,10 @@ export const execute = (code: string, printFunction): number => {
     const tokenTypeToStateFunction: Record<TokenType, StateFunction> = {
         // side effect: print the single counter as ascii
         [TokenType.Print]: (currentState: State, _passedJumpTable) => {
-            const { tapeIndex, value } = currentState;
+            const { readHead, counter } = currentState;
 
             // without new line
-            const character = String.fromCharCode(value);
+            const character = String.fromCharCode(counter);
 
             if (printFunction) {
                 printFunction(character);
@@ -88,7 +88,7 @@ export const execute = (code: string, printFunction): number => {
                 process.stdout.write(character);
             }
 
-            return { value, tapeIndex: tapeIndex + 1 };
+            return { counter, readHead: readHead + 1 };
         },
 
         // move to next instruction. we don't need the jump table
@@ -96,108 +96,108 @@ export const execute = (code: string, printFunction): number => {
             currentState: State,
             _passedJumpTable: JumpTable,
         ): State => {
-            const { tapeIndex, value } = currentState;
+            const { readHead, counter } = currentState;
 
-            return { value, tapeIndex: tapeIndex + 1 };
+            return { counter, readHead: readHead + 1 };
         },
-        // increment current value, move to next instruction.
+        // increment current counter, move to next instruction.
         [TokenType.Increment]: (
             currentState: State,
             _passedJumpTable: JumpTable,
         ): State => {
-            const { value, tapeIndex } = currentState;
+            const { counter, readHead } = currentState;
             return {
-                value: value + 1,
-                tapeIndex: tapeIndex + 1,
+                counter: counter + 1,
+                readHead: readHead + 1,
             };
         },
-        // decrement current value, move to next instruction.
+        // decrement current counter, move to next instruction.
         [TokenType.Decrement]: (
             currentState: State,
             _passedJumpTable: JumpTable,
         ): State => {
-            const { value, tapeIndex } = currentState;
+            const { counter, readHead } = currentState;
             return {
-                value: value - 1,
-                tapeIndex: tapeIndex + 1,
+                counter: counter - 1,
+                readHead: readHead + 1,
             };
         },
-        // handling looping, check if value is 0, jump to end of loop, otherwise advance
+        // handling looping, check if counter is 0, jump to end of loop, otherwise advance
         [TokenType.Loop_Start]: (
             currentState: State,
             passedJumpTable: JumpTable,
         ): State => {
-            const { value, tapeIndex } = currentState;
+            const { counter, readHead } = currentState;
 
             // jump to end of loop
-            if (value === 0) {
+            if (counter === 0) {
                 // malformed input
-                if (!passedJumpTable.has(tapeIndex)) {
+                if (!passedJumpTable.has(readHead)) {
                     raiseMalformedInput();
                 }
 
-                const loopEnd = passedJumpTable.get(tapeIndex);
+                const loopEnd = passedJumpTable.get(readHead);
                 const nextIndex = loopEnd.index;
 
-                return { value, tapeIndex: nextIndex };
+                return { counter, readHead: nextIndex };
             }
 
             // else enter the loop, move to next instruction
-            return { value, tapeIndex: tapeIndex + 1 };
+            return { counter, readHead: readHead + 1 };
         },
-        // if value !== 0 jump to "[" beginning
+        // if counter !== 0 jump to "[" beginning
         [TokenType.Loop_End]: (
             currentState: State,
             passedJumpTable: JumpTable,
         ): State => {
-            const { value, tapeIndex } = currentState;
+            const { counter, readHead } = currentState;
 
             // loop back, jump to loop start
-            if (value !== 0) {
-                if (!passedJumpTable.has(tapeIndex)) {
+            if (counter !== 0) {
+                if (!passedJumpTable.has(readHead)) {
                     raiseMalformedInput();
                 }
 
-                const loopStart = passedJumpTable.get(tapeIndex);
+                const loopStart = passedJumpTable.get(readHead);
                 const startIndex = loopStart.index;
 
-                return { value, tapeIndex: startIndex };
+                return { counter, readHead: startIndex };
             }
 
-            // value === 0; move to next instruction
-            return { value, tapeIndex: tapeIndex + 1 };
+            // counter === 0; move to next instruction
+            return { counter, readHead: readHead + 1 };
         },
-        // condition check, if value is 0, jump to end of conidiation, otherwise ++
+        // condition check, if counter is 0, jump to end of conidiation, otherwise ++
         [TokenType.If_Start]: (
             currentState: State,
             passedJumpTable: JumpTable,
         ): State => {
-            const { value, tapeIndex } = currentState;
+            const { counter, readHead } = currentState;
 
             // jump to if end
-            if (value === 0) {
+            if (counter === 0) {
                 // malformed input
-                if (!passedJumpTable.has(tapeIndex)) {
+                if (!passedJumpTable.has(readHead)) {
                     raiseMalformedInput();
                 }
 
-                const ifEnd = passedJumpTable.get(tapeIndex);
+                const ifEnd = passedJumpTable.get(readHead);
                 const jumpIndex = ifEnd.index;
 
-                return { value, tapeIndex: jumpIndex };
+                return { counter, readHead: jumpIndex };
             }
 
             // else enter if
-            return { value, tapeIndex: tapeIndex + 1 };
+            return { counter, readHead: readHead + 1 };
         },
         // condition cannot loop back, so just advance
         [TokenType.If_End]: (
             currentState: State,
             _passedJumpTable: JumpTable,
         ): State => {
-            const { value, tapeIndex } = currentState;
+            const { counter, readHead } = currentState;
 
-            return { value, tapeIndex: tapeIndex + 1 };
+            return { counter, readHead: readHead + 1 };
         },
     };
 
@@ -262,8 +262,8 @@ export const execute = (code: string, printFunction): number => {
     }
 
     // run the program the program, as long as there are instructions
-    while (currentState.tapeIndex < code.length) {
-        const { type, _ } = allTokens[currentState.tapeIndex];
+    while (currentState.readHead < code.length) {
+        const { type, _ } = allTokens[currentState.readHead];
 
         // invalid character
         if (type === undefined) {
@@ -275,6 +275,6 @@ export const execute = (code: string, printFunction): number => {
         currentState = nextState;
     }
 
-    // return final value
-    return currentState.value;
+    // return final counter
+    return currentState.counter;
 };

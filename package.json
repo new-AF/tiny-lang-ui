@@ -10,6 +10,7 @@
         "preview": "vite preview",
         "predeploy": "pnpm run build",
         "deploy": "gh-pages -d dist",
+        "test": "tsx --watch --test ./test/execute.test.ts",
         "grammar": "tsx --watch ./src/grammar/grammar.ts"
     },
     "dependencies": {
