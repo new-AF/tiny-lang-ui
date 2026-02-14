@@ -23,7 +23,7 @@ export const execute = (code: string, printFunction): number => {
     // for better readability and debugability
     enum TokenType {
         Print = "Print",
-        Continue = "Continue",
+        Pass = "Pass",
         Increment = "Increment",
         Decrement = "Decrement",
         WhileStart = "WhileStart",
@@ -35,7 +35,7 @@ export const execute = (code: string, printFunction): number => {
     // part of tokenization, and for better DX
     const characterToTokenType = {
         "!": TokenType.Print,
-        ">": TokenType.Continue,
+        ">": TokenType.Pass,
         "+": TokenType.Increment,
         "-": TokenType.Decrement,
         "[": TokenType.WhileStart,
@@ -67,138 +67,164 @@ export const execute = (code: string, printFunction): number => {
     // produce our next state
     type StateFunction = (state: State, globalJumpTable: JumpTable) => State;
 
+    // --------- token processing arrow functions ---------
+    // process "!" print instruction
+    const processPrint = (currentState: State, _passedJumpTable) => {
+        const { readHead, counter } = currentState;
+
+        // without new line
+        const character = String.fromCharCode(counter);
+
+        // external custom accumulating/printing function
+        if (printFunction) {
+            printFunction(character);
+        }
+
+        // otherwise default in Node
+        else if (typeof process !== "undefined") {
+            process.stdout.write(character);
+        }
+
+        return { counter, readHead: readHead + 1 };
+    };
+
+    // process ">" pass instruction
+    // just advance read head, move to next instruction. we don't need the jump table
+    const processPass = () => {
+        const { readHead, counter } = currentState;
+
+        return { counter, readHead: readHead + 1 };
+    };
+
+    // process "+" increment instruction
+    // increment current counter, move to next instruction.
+    const processIncrement = () => {
+        const { counter, readHead } = currentState;
+        return {
+            counter: counter + 1,
+            readHead: readHead + 1,
+        };
+    };
+
+    // process "-" decrement instruction
+    // decrement current counter, move to next instruction.
+    const processDecrement = (
+        currentState: State,
+        _passedJumpTable: JumpTable,
+    ): State => {
+        const { counter, readHead } = currentState;
+        return {
+            counter: counter - 1,
+            readHead: readHead + 1,
+        };
+    };
+
+    // process "[" while start instruction
+    // if counter is 0, jump to end of loop, otherwise advance read head and enter "body"
+    const processWhileStart = (
+        currentState: State,
+        passedJumpTable: JumpTable,
+    ): State => {
+        const { counter, readHead } = currentState;
+
+        // jump to end of loop
+        if (counter === 0) {
+            // malformed input
+            if (!passedJumpTable.has(readHead)) {
+                raiseMalformedInput();
+            }
+
+            const WhileEnd = passedJumpTable.get(readHead);
+            const nextIndex = WhileEnd.index;
+
+            return { counter, readHead: nextIndex };
+        }
+
+        // else enter the loop, move to next instruction
+        return { counter, readHead: readHead + 1 };
+    };
+
+    // process "]" while end instruction
+    // if counter is not 0, loop back, jump to "[" beginning
+    const processWhileEnd = (
+        currentState: State,
+        passedJumpTable: JumpTable,
+    ): State => {
+        const { counter, readHead } = currentState;
+
+        // loop back, jump to loop start
+        if (counter !== 0) {
+            if (!passedJumpTable.has(readHead)) {
+                raiseMalformedInput();
+            }
+
+            const loopStart: Token = passedJumpTable.get(readHead);
+            const startIndex = loopStart.index;
+
+            return { counter, readHead: startIndex };
+        }
+
+        // counter === 0; move to next instruction
+        return { counter, readHead: readHead + 1 };
+    };
+
+    // process "{" if start instruction
+    // if counter is 0, jump to end of condition, otherwise advance read head and enter "body"
+    const processIfStart = (
+        currentState: State,
+        passedJumpTable: JumpTable,
+    ): State => {
+        const { counter, readHead } = currentState;
+
+        // jump to if end
+        if (counter === 0) {
+            // malformed input
+            if (!passedJumpTable.has(readHead)) {
+                raiseMalformedInput();
+            }
+
+            const ifEnd = passedJumpTable.get(readHead);
+            const jumpIndex = ifEnd.index;
+
+            return { counter, readHead: jumpIndex };
+        }
+
+        // else enter if
+        return { counter, readHead: readHead + 1 };
+    };
+
+    // process "}" if end instruction
+    // "if" cannot loop back, so just advance read head
+    const processIfEnd = (
+        currentState: State,
+        _passedJumpTable: JumpTable,
+    ): State => {
+        const { counter, readHead } = currentState;
+
+        return { counter, readHead: readHead + 1 };
+    };
+
     // token type -> State Function. this is the main crux of our code,
     const tokenTypeToTransitionFunction: Record<TokenType, StateFunction> = {
         // side effect: print the single counter as ascii
-        [TokenType.Print]: (currentState: State, _passedJumpTable) => {
-            const { readHead, counter } = currentState;
+        [TokenType.Print]: processPrint,
 
-            // without new line
-            const character = String.fromCharCode(counter);
+        [TokenType.Pass]: processPass,
 
-            if (printFunction) {
-                printFunction(character);
-            }
+        [TokenType.Increment]: processIncrement,
 
-            // otherwise default in Node
-            else if (typeof process !== "undefined") {
-                process.stdout.write(character);
-            }
+        [TokenType.Decrement]: processDecrement,
 
-            return { counter, readHead: readHead + 1 };
-        },
+        [TokenType.WhileStart]: processWhileStart,
 
-        // move to next instruction. we don't need the jump table
-        [TokenType.Continue]: (
-            currentState: State,
-            _passedJumpTable: JumpTable,
-        ): State => {
-            const { readHead, counter } = currentState;
+        [TokenType.WhileEnd]: processWhileEnd,
 
-            return { counter, readHead: readHead + 1 };
-        },
-        // increment current counter, move to next instruction.
-        [TokenType.Increment]: (
-            currentState: State,
-            _passedJumpTable: JumpTable,
-        ): State => {
-            const { counter, readHead } = currentState;
-            return {
-                counter: counter + 1,
-                readHead: readHead + 1,
-            };
-        },
-        // decrement current counter, move to next instruction.
-        [TokenType.Decrement]: (
-            currentState: State,
-            _passedJumpTable: JumpTable,
-        ): State => {
-            const { counter, readHead } = currentState;
-            return {
-                counter: counter - 1,
-                readHead: readHead + 1,
-            };
-        },
-        // handling looping, check if counter is 0, jump to end of loop, otherwise advance
-        [TokenType.WhileStart]: (
-            currentState: State,
-            passedJumpTable: JumpTable,
-        ): State => {
-            const { counter, readHead } = currentState;
+        [TokenType.IfStart]: processIfStart,
 
-            // jump to end of loop
-            if (counter === 0) {
-                // malformed input
-                if (!passedJumpTable.has(readHead)) {
-                    raiseMalformedInput();
-                }
-
-                const WhileEnd = passedJumpTable.get(readHead);
-                const nextIndex = WhileEnd.index;
-
-                return { counter, readHead: nextIndex };
-            }
-
-            // else enter the loop, move to next instruction
-            return { counter, readHead: readHead + 1 };
-        },
-        // if counter !== 0 jump to "[" beginning
-        [TokenType.WhileEnd]: (
-            currentState: State,
-            passedJumpTable: JumpTable,
-        ): State => {
-            const { counter, readHead } = currentState;
-
-            // loop back, jump to loop start
-            if (counter !== 0) {
-                if (!passedJumpTable.has(readHead)) {
-                    raiseMalformedInput();
-                }
-
-                const loopStart = passedJumpTable.get(readHead);
-                const startIndex = loopStart.index;
-
-                return { counter, readHead: startIndex };
-            }
-
-            // counter === 0; move to next instruction
-            return { counter, readHead: readHead + 1 };
-        },
-        // condition check, if counter is 0, jump to end of conidiation, otherwise ++
-        [TokenType.IfStart]: (
-            currentState: State,
-            passedJumpTable: JumpTable,
-        ): State => {
-            const { counter, readHead } = currentState;
-
-            // jump to if end
-            if (counter === 0) {
-                // malformed input
-                if (!passedJumpTable.has(readHead)) {
-                    raiseMalformedInput();
-                }
-
-                const ifEnd = passedJumpTable.get(readHead);
-                const jumpIndex = ifEnd.index;
-
-                return { counter, readHead: jumpIndex };
-            }
-
-            // else enter if
-            return { counter, readHead: readHead + 1 };
-        },
-        // condition cannot loop back, so just advance
-        [TokenType.IfEnd]: (
-            currentState: State,
-            _passedJumpTable: JumpTable,
-        ): State => {
-            const { counter, readHead } = currentState;
-
-            return { counter, readHead: readHead + 1 };
-        },
+        [TokenType.IfEnd]: processIfEnd,
     };
 
-    // convert all tokens for better readability and debugability
+    // convert characters to tokens for better readability and debugability
     const tokens: Token[] = Array.from(code, (substring, index) => {
         const type: TokenType = characterToTokenType[substring];
 
@@ -207,7 +233,7 @@ export const execute = (code: string, printFunction): number => {
     });
 
     // process each token, call transition function, return new state
-    const interpretToken = (
+    const processToken = (
         currentToken: Token,
         globalJumpTable: JumpTable,
     ): State => {
@@ -289,7 +315,7 @@ export const execute = (code: string, printFunction): number => {
     // run the program the program, as long as there are instructions
     while (currentState.readHead < tokens.length) {
         const currentToken = tokens[currentState.readHead];
-        const nextState = interpretToken(currentToken, globalJumpTable);
+        const nextState = processToken(currentToken, globalJumpTable);
         currentState = nextState;
     }
 
