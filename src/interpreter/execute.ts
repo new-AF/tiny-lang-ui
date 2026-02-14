@@ -68,7 +68,9 @@ export const execute = (code: string, printFunction): number => {
     type StateFunction = (state: State, globalJumpTable: JumpTable) => State;
 
     // --------- token processing arrow functions ---------
+
     // process "!" print instruction
+    // side effect: print the single counter as ascii. advance read head.
     const processPrint = (currentState: State, _passedJumpTable) => {
         const { readHead, counter } = currentState;
 
@@ -206,21 +208,13 @@ export const execute = (code: string, printFunction): number => {
 
     // token type -> State Function. this is the main crux of our code,
     const tokenTypeToTransitionFunction: Record<TokenType, StateFunction> = {
-        // side effect: print the single counter as ascii
         [TokenType.Print]: processPrint,
-
         [TokenType.Pass]: processPass,
-
         [TokenType.Increment]: processIncrement,
-
         [TokenType.Decrement]: processDecrement,
-
         [TokenType.WhileStart]: processWhileStart,
-
         [TokenType.WhileEnd]: processWhileEnd,
-
         [TokenType.IfStart]: processIfStart,
-
         [TokenType.IfEnd]: processIfEnd,
     };
 
