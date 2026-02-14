@@ -32,7 +32,7 @@ export const execute = (code: string, printFunction): number => {
         IfEnd = "IfEnd",
     }
 
-    // part of tokenize and for better DX
+    // part of tokenization, and for better DX
     const characterToTokenType = {
         "!": TokenType.Print,
         ">": TokenType.Continue,
@@ -45,9 +45,8 @@ export const execute = (code: string, printFunction): number => {
     };
 
     /*
-    encode jumps for WhileStart <-> WhileEnd
-    IfStart -> IfEnd
-    we don't need  IfEnd <- IfStart because once if reaches end it cannot loop back
+    Record locations of WhileStart, WhileEnd, IfStart, IfEnd
+    we don't need  IfStart <- IfEnd because once if reaches end it cannot loop back
     */
     type JumpTable = Map<number, Token>;
 
@@ -69,7 +68,7 @@ export const execute = (code: string, printFunction): number => {
     type StateFunction = (state: State, globalJumpTable: JumpTable) => State;
 
     // token type -> State Function. this is the main crux of our code,
-    const tokenTypeToStateFunction: Record<TokenType, StateFunction> = {
+    const tokenTypeToTransitionFunction: Record<TokenType, StateFunction> = {
         // side effect: print the single counter as ascii
         [TokenType.Print]: (currentState: State, _passedJumpTable) => {
             const { readHead, counter } = currentState;
@@ -219,7 +218,7 @@ export const execute = (code: string, printFunction): number => {
             raiseMalformedInput();
         }
 
-        const transitionFunction = tokenTypeToStateFunction[type];
+        const transitionFunction = tokenTypeToTransitionFunction[type];
         const nextState = transitionFunction(currentState, globalJumpTable);
 
         return nextState;
