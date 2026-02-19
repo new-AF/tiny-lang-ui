@@ -32,21 +32,9 @@ export const execute = (code: string, printFunction): number => {
         IfEnd = "IfEnd",
     }
 
-    // part of tokenization, and for better DX
-    const characterToTokenType = {
-        "!": TokenType.Print,
-        ">": TokenType.Pass,
-        "+": TokenType.Increment,
-        "-": TokenType.Decrement,
-        "[": TokenType.WhileStart,
-        "]": TokenType.WhileEnd,
-        "{": TokenType.IfStart,
-        "}": TokenType.IfEnd,
-    };
-
     /*
     Record locations of WhileStart, WhileEnd, IfStart, IfEnd
-    we don't need  IfStart <- IfEnd because once if reaches end it cannot loop back
+    we don't need IfEnd -> IfStart because once if reaches end it cannot loop back
     */
     type JumpTable = Map<number, Token>;
 
@@ -82,7 +70,7 @@ export const execute = (code: string, printFunction): number => {
             printFunction(character);
         }
 
-        // otherwise default in Node
+        // otherwise default in Node.js
         else if (typeof process !== "undefined") {
             process.stdout.write(character);
         }
@@ -218,11 +206,24 @@ export const execute = (code: string, printFunction): number => {
         [TokenType.IfEnd]: processIfEnd,
     };
 
-    // convert characters to tokens for better readability and debugability
-    const tokens: Token[] = Array.from(code, (substring, index) => {
-        const type: TokenType = characterToTokenType[substring];
+    // tokenization. convert characters to tokens for better readability and debugability
+    const tokens: Token[] = Array.from(code, (character, index) => {
+        // part of tokenization, and for better DX
+        const tokenType = {
+            "!": TokenType.Print,
+            ">": TokenType.Pass,
+            "+": TokenType.Increment,
+            "-": TokenType.Decrement,
+            "[": TokenType.WhileStart,
+            "]": TokenType.WhileEnd,
+            "{": TokenType.IfStart,
+            "}": TokenType.IfEnd,
+        };
 
-        const token = { type, index };
+        const type: TokenType = tokenType[character];
+
+        const token: Token = { type, index };
+
         return token;
     });
 
@@ -252,15 +253,12 @@ export const execute = (code: string, printFunction): number => {
         const jumpTable: JumpTable = new Map();
 
         for (const token of tokens) {
-            const { type: tokenType, index } = token;
-            if (
-                tokenType === TokenType.WhileStart ||
-                tokenType === TokenType.IfStart
-            ) {
+            const { type, index } = token;
+            if (type === TokenType.WhileStart || type === TokenType.IfStart) {
                 stack.push(token);
             }
             // do it both ways, jump[start] = end, and jump[end]=start
-            else if (tokenType === TokenType.WhileEnd) {
+            else if (type === TokenType.WhileEnd) {
                 const loopStart = stack.pop();
 
                 if (loopStart === undefined) {
@@ -279,7 +277,7 @@ export const execute = (code: string, printFunction): number => {
                 jumpTable.set(index, loopStart);
             }
             // only one way jump[ifStart] = ifEnd; because we cannot go back/loop
-            else if (tokenType === TokenType.IfEnd) {
+            else if (type === TokenType.IfEnd) {
                 const ifStart = stack.pop();
 
                 if (ifStart === undefined) {
