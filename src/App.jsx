@@ -224,7 +224,6 @@ export const App = () => {
         status: "ran",
         didWePrint: false, // did we print something
         canonicalSyntax: defaultExample,
-        humanSyntax: convertToHumanSyntax(defaultExample),
         counter: 0,
         log: "", // accumulated characters, reset manually
     });
@@ -240,7 +239,15 @@ export const App = () => {
     // executeWorker.ts
     const workerRef = useRef(null);
 
+    // run web worker
     const runCode = () => {
+        // convert to human syntax
+        const humanSyntax = convertToHumanSyntax(state.canonicalSyntax);
+
+        updateState({
+            humanSyntax,
+        });
+
         if (workerRef.current) {
             workerRef.current.terminate();
         }
@@ -253,7 +260,7 @@ export const App = () => {
         workerRef.current = worker;
         worker.postMessage({ code: state.canonicalSyntax });
 
-        console.log({ worker });
+        // console.log({ worker });
 
         updateState({
             status: "running",
@@ -334,7 +341,7 @@ export const App = () => {
         });
     };
 
-    // whener user types in something
+    // whener user types in something in cannonical syntax
     useEffect(runCode, [state.canonicalSyntax]);
 
     /* return */
@@ -367,9 +374,7 @@ export const App = () => {
                     "gap-y-(--spacing-lg)",
                 )}
             >
-                {/*  Input + Console Log + Counter Value */}
-
-                {/* Input */}
+                {/* Canonical Input + Human Readable Syntax   */}
                 <section
                     className={mergeClassNames(
                         "flex",
@@ -377,128 +382,115 @@ export const App = () => {
                         "gap-y-(--spacing-sm)",
                     )}
                 >
-                    <div
+                    <label
+                        htmlFor="program"
                         className={mergeClassNames(
+                            // "outline",
                             "flex",
                             "flex-col",
                             "gap-y-(--spacing-xs)",
                         )}
                     >
-                        <label
-                            htmlFor="program"
-                            className={mergeClassNames(
-                                // "outline",
-                                "flex",
-                                "flex-col",
-                                "gap-y-(--spacing-xs)",
-                            )}
-                        >
-                            <Header>
-                                Your Program
-                                <Badge
-                                    {...(state.status === "ran"
+                        <Header>
+                            Your Program
+                            <Badge
+                                {...(state.status === "ran"
+                                    ? {
+                                          className: mergeClassNames(
+                                              "bg-emerald-800",
+                                              "text-slate-200",
+                                          ),
+                                          children:
+                                              "Completed running (halted)",
+                                      }
+                                    : state.status === "error"
+                                      ? {
+                                            className: mergeClassNames(
+                                                "bg-rose-800",
+                                                "text-slate-200",
+                                            ),
+                                            children: "Has invalid syntax",
+                                        }
+                                      : state.status === "running"
                                         ? {
                                               className: mergeClassNames(
-                                                  "bg-emerald-800",
+                                                  "bg-amber-800",
                                                   "text-slate-200",
                                               ),
-                                              children:
-                                                  "Completed running (halted)",
+                                              children: (
+                                                  <>
+                                                      Is running...
+                                                      <div
+                                                          className={mergeClassNames(
+                                                              "loader",
+                                                          )}
+                                                      />
+                                                  </>
+                                              ),
                                           }
-                                        : state.status === "error"
-                                          ? {
-                                                className: mergeClassNames(
-                                                    "bg-rose-800",
-                                                    "text-slate-200",
-                                                ),
-                                                children: "Has invalid syntax",
-                                            }
-                                          : state.status === "running"
-                                            ? {
-                                                  className: mergeClassNames(
-                                                      "bg-amber-800",
-                                                      "text-slate-200",
-                                                  ),
-                                                  children: (
-                                                      <>
-                                                          Is running...
-                                                          <div
-                                                              className={mergeClassNames(
-                                                                  "loader",
-                                                              )}
-                                                          />
-                                                      </>
-                                                  ),
-                                              }
-                                            : {})}
-                                />
-                            </Header>
+                                        : {})}
+                            />
+                        </Header>
 
-                            {/* Canonical Syntax */}
-                            <span
-                                className={mergeClassNames(
-                                    "mt-(--spacing-xs)",
-                                    "text-xs",
-                                    "text-slate-400",
-                                )}
-                            >
-                                Canonical Syntax
-                            </span>
+                        {/* Canonical Syntax */}
+                        <span
+                            className={mergeClassNames(
+                                "mt-(--spacing-xs)",
+                                "text-xs",
+                                "text-slate-400",
+                            )}
+                        >
+                            Canonical Syntax
+                        </span>
 
-                            <Textarea
-                                className={
-                                    state.status === "ran"
+                        <Textarea
+                            className={
+                                state.status === "ran"
+                                    ? mergeClassNames(
+                                          "focus-visible:ring-emerald-800",
+                                      )
+                                    : state.status === "running"
+                                      ? mergeClassNames(
+                                            "focus-visible:ring-amber-800",
+                                        )
+                                      : state.status === "error"
                                         ? mergeClassNames(
-                                              "focus-visible:ring-emerald-800",
+                                              "focus-visible:ring-rose-800",
                                           )
-                                        : state.status === "running"
-                                          ? mergeClassNames(
-                                                "focus-visible:ring-amber-800",
-                                            )
-                                          : state.status === "error"
-                                            ? mergeClassNames(
-                                                  "focus-visible:ring-rose-800",
-                                              )
-                                            : mergeClassNames(
-                                                  "focus-visible:ring-gray-600",
-                                              )
-                                }
-                                value={state.canonicalSyntax}
-                                onInput={(event) => {
-                                    const canonicalSyntax = event.target.value;
+                                        : mergeClassNames(
+                                              "focus-visible:ring-gray-600",
+                                          )
+                            }
+                            value={state.canonicalSyntax}
+                            onInput={(event) => {
+                                const canonicalSyntax = event.target.value;
 
-                                    const humanSyntax =
-                                        convertToHumanSyntax(canonicalSyntax);
+                                updateState({
+                                    canonicalSyntax,
+                                });
+                            }}
+                            clearButtonOnClick={() => updateState({ text: "" })}
+                        />
 
-                                    updateState({
-                                        canonicalSyntax,
-                                        humanSyntax,
-                                    });
-                                }}
-                                clearButtonOnClick={() =>
-                                    updateState({ text: "" })
-                                }
-                            />
-
-                            {/*  Human Readable Syntax */}
-                            <span
-                                className={mergeClassNames(
-                                    "text-xs",
-                                    "text-slate-400",
-                                )}
-                            >
-                                Human Readable Syntax
-                            </span>
-                            <Textarea
-                                disabled
-                                rows={10}
-                                value={state.humanSyntax}
-                                onClick={(event) => {}}
-                            />
-                        </label>
-                    </div>
+                        {/*  Human Readable Syntax */}
+                        <span
+                            className={mergeClassNames(
+                                "text-xs",
+                                "text-slate-400",
+                            )}
+                        >
+                            Human Readable Syntax
+                        </span>
+                        <Textarea
+                            disabled
+                            rows={10}
+                            value={state.humanSyntax}
+                            onClick={(event) => {}}
+                        />
+                    </label>
                 </section>
 
+                {/* Counter + Print Output  */}
                 <div
                     className={mergeClassNames(
                         "flex",
