@@ -434,6 +434,7 @@ export const App = () => {
                                 />
                             </Header>
 
+                            {/* Canonical Syntax */}
                             <span
                                 className={mergeClassNames(
                                     "mt-(--spacing-xs)",
@@ -479,6 +480,7 @@ export const App = () => {
                                 }
                             />
 
+                            {/*  Human Readable Syntax */}
                             <span
                                 className={mergeClassNames(
                                     "text-xs",
@@ -488,6 +490,7 @@ export const App = () => {
                                 Human Readable Syntax
                             </span>
                             <Textarea
+                                disabled
                                 rows={10}
                                 value={state.humanSyntax}
                                 onClick={(event) => {}}

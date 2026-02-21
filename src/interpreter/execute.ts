@@ -59,7 +59,7 @@ export const execute = (code: string, printFunction): number => {
 
     // process "!" print instruction
     // side effect: print the single counter as ascii. advance read head.
-    const processPrint = (currentState: State, _passedJumpTable) => {
+    const processPrint = (currentState: State, _passedJumpTable): State => {
         const { readHead, counter } = currentState;
 
         // without new line
@@ -80,7 +80,7 @@ export const execute = (code: string, printFunction): number => {
 
     // process ">" pass instruction
     // just advance read head, move to next instruction. we don't need the jump table
-    const processPass = () => {
+    const processPass = (): State => {
         const { readHead, counter } = currentState;
 
         return { counter, readHead: readHead + 1 };
@@ -88,7 +88,7 @@ export const execute = (code: string, printFunction): number => {
 
     // process "+" increment instruction
     // increment current counter, move to next instruction.
-    const processIncrement = () => {
+    const processIncrement = (): State => {
         const { counter, readHead } = currentState;
         return {
             counter: counter + 1,
