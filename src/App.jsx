@@ -175,45 +175,71 @@ const ValueContainer = ({
     );
 };
 
-const Textarea = ({ className, children, clearButtonOnClick, ...rest }) => (
-    <>
-        <textarea
-            spellCheck="false"
-            rows={4}
-            className={mergeClassNames(
-                "text-sm",
-                "font-mono",
-                "p-(--spacing-sm)",
-                "mt-0.5",
-                "w-full",
-                "resize-none",
-                "rounded-md",
-                "shadow-sm",
-                "text-slate-300",
-                "bg-gray-900",
+const Textarea = ({
+    className,
+    children,
+    clearButtonOnClick,
+    onInput: originalOnInput,
+    ...rest
+}) => {
+    const textareaRef = useRef(null);
 
-                // disable white perimeter
-                "focus:outline-none",
-                "focus:ring-2",
-                "focus:ring-offset-0",
-                "focus:shadow-none",
+    const autoExpand = (event) => {
+        // Reset height to auto
+        // Set height to scrollHeight
+        event.target.style.height = "auto";
+        event.target.style.height = `${event.target.scrollHeight}px`;
+    };
 
-                className,
-            )}
-            {...rest}
-        />
+    useEffect(() => {
+        if (textareaRef.current) {
+            // Auto-expand on initial render, simulate 'event'
+            autoExpand({ target: textareaRef.current });
+        }
+    }, []);
 
-        <div className="mt-0.5 flex items-center justify-end gap-2">
-            <button
-                onClick={clearButtonOnClick}
-                type="button"
-                className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-            >
-                Clear
-            </button>
-        </div>
-    </>
-);
+    return (
+        <>
+            <textarea
+                ref={textareaRef}
+                spellCheck="false"
+                className={mergeClassNames(
+                    "text-sm",
+                    "font-mono",
+                    "p-(--spacing-sm)",
+                    "mt-0.5",
+                    "w-full",
+                    "resize-none",
+                    "rounded-md",
+                    "shadow-sm",
+                    "text-slate-300",
+                    "bg-gray-900",
+                    // Disable white perimeter
+                    "focus:outline-none",
+                    "focus:ring-2",
+                    "focus:ring-offset-0",
+                    "focus:shadow-none",
+                    className,
+                )}
+                onInput={(event) => {
+                    originalOnInput(event);
+                    autoExpand(event);
+                }}
+                {...rest}
+            />
+
+            <div className="mt-0.5 flex items-center justify-end gap-2">
+                <button
+                    onClick={clearButtonOnClick}
+                    type="button"
+                    className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                >
+                    Clear
+                </button>
+            </div>
+        </>
+    );
+};
 
 export const App = () => {
     const defaultExample =
@@ -483,7 +509,6 @@ export const App = () => {
                         </span>
                         <Textarea
                             disabled
-                            rows={10}
                             value={state.humanSyntax}
                             onClick={(event) => {}}
                         />
