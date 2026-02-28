@@ -180,6 +180,7 @@ const Textarea = ({
     children,
     clearButtonOnClick,
     onInput: originalOnInput,
+    value,
     ...rest
 }) => {
     const textareaRef = useRef(null);
@@ -192,17 +193,18 @@ const Textarea = ({
     };
 
     useEffect(() => {
+        // Auto-expand on initial render, simulate 'event'
         if (textareaRef.current) {
-            // Auto-expand on initial render, simulate 'event'
             autoExpand({ target: textareaRef.current });
         }
-    }, []);
+    }, [value]);
 
     return (
         <>
             <textarea
                 ref={textareaRef}
                 spellCheck="false"
+                value={value} // Control textarea value from the passed prop
                 className={mergeClassNames(
                     "text-sm",
                     "font-mono",
@@ -227,7 +229,6 @@ const Textarea = ({
                 }}
                 {...rest}
             />
-
             <div className="mt-0.5 flex items-center justify-end gap-2">
                 <button
                     onClick={clearButtonOnClick}
