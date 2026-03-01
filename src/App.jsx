@@ -1,9 +1,12 @@
 import { mergeClassNames } from "simple-merge-class-names";
 import Examples from "./data/Examples.json";
-import { useState, useRef, useTransition } from "react";
-import { execute, MalformedInputError } from "./interpreter/execute";
+import { useState, useRef } from "react";
+
 import { useEffect } from "react";
-import { convertToHumanSyntax } from "./grammar/grammar";
+import { convertToHumanSyntax } from "./grammar/grammar.ts";
+
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { nord as dark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const Code = ({ children, "mr-only": mrOnly }) => {
     return (
@@ -181,9 +184,11 @@ const Textarea = ({
     clearButtonOnClick,
     onInput: originalOnInput,
     value,
+    disableClearButton = false,
+    syntaxHighlight,
     ...rest
 }) => {
-    const textareaRef = useRef(null);
+    const ref = useRef(null);
 
     const autoExpand = (event) => {
         // Reset height to auto
@@ -194,50 +199,66 @@ const Textarea = ({
 
     useEffect(() => {
         // Auto-expand on initial render, simulate 'event'
-        if (textareaRef.current) {
-            autoExpand({ target: textareaRef.current });
+        if (ref.current) {
+            autoExpand({ target: ref.current });
         }
     }, [value]);
 
     return (
         <>
-            <textarea
-                ref={textareaRef}
-                spellCheck="false"
-                value={value} // Control textarea value from the passed prop
-                className={mergeClassNames(
-                    "text-sm",
-                    "font-mono",
-                    "p-(--spacing-sm)",
-                    "mt-0.5",
-                    "w-full",
-                    "resize-none",
-                    "rounded-md",
-                    "shadow-sm",
-                    "text-slate-300",
-                    "bg-gray-900",
-                    // Disable white perimeter
-                    "focus:outline-none",
-                    "focus:ring-2",
-                    "focus:ring-offset-0",
-                    "focus:shadow-none",
-                    className,
-                )}
-                onInput={(event) => {
-                    originalOnInput(event);
-                    autoExpand(event);
-                }}
-                {...rest}
-            />
-            <div className="mt-0.5 flex items-center justify-end gap-2">
-                <button
-                    onClick={clearButtonOnClick}
-                    type="button"
-                    className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+            {syntaxHighlight === true && (
+                <SyntaxHighlighter
+                    showLineNumbers={true}
+                    wrapLines={true}
+                    language="javascript"
+                    style={dark}
                 >
-                    Clear
-                </button>
-            </div>
+                    {value}
+                </SyntaxHighlighter>
+            )}
+
+            {!syntaxHighlight && (
+                <textarea
+                    ref={ref}
+                    spellCheck="false"
+                    value={value} // Control textarea value from the passed prop
+                    className={mergeClassNames(
+                        "text-sm",
+                        "font-mono",
+                        "p-(--spacing-sm)",
+                        "mt-0.5",
+                        "w-full",
+                        "resize-none",
+                        "rounded-md",
+                        "shadow-sm",
+                        "text-slate-300",
+                        "bg-gray-900",
+                        // Disable white perimeter
+                        "focus:outline-none",
+                        "focus:ring-2",
+                        "focus:ring-offset-0",
+                        "focus:shadow-none",
+                        className,
+                    )}
+                    onInput={(event) => {
+                        originalOnInput(event);
+                        autoExpand(event);
+                    }}
+                    {...rest}
+                />
+            )}
+
+            {disableClearButton === false && (
+                <div className="mt-0.5 flex items-center justify-end gap-2">
+                    <button
+                        onClick={clearButtonOnClick}
+                        type="button"
+                        className="cursor-pointer rounded border border-transparent px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                    >
+                        Clear
+                    </button>
+                </div>
+            )}
         </>
     );
 };
@@ -333,41 +354,6 @@ export const App = () => {
             return combined;
         });
     };
-
-    const [isLoading, startTransition] = useTransition();
-
-    // crux of the app
-    const runProgram = () => {
-        startTransition(() => {
-            updateState({ status: "running" });
-
-            // run core interpreter
-            // accumulate characters, and get single value counter
-            let value;
-            try {
-                value = execute(state.canonicalSyntax, accumulate);
-
-                const string = printArray.join("");
-                const escaped = JSON.stringify(string);
-                const didWePrint = printArray.length > 0; // did we print something
-
-                // if we didWePrint, log that, otherwise, escape ascii value
-                updateState({
-                    status: "ran", // ran | running | error
-                    didWePrint,
-                    counter: value,
-                    log: escaped,
-                });
-            } catch (error) {
-                if (error instanceof MalformedInputError) {
-                    updateState({ status: "error" });
-                }
-            }
-
-            // debugger;
-        });
-    };
-
     // whener user types in something in cannonical syntax
     useEffect(runCode, [state.canonicalSyntax]);
 
@@ -469,7 +455,6 @@ export const App = () => {
                         >
                             Canonical Syntax
                         </span>
-
                         <Textarea
                             className={
                                 state.status === "ran"
@@ -510,8 +495,9 @@ export const App = () => {
                         </span>
                         <Textarea
                             disabled
+                            disableClearButton
+                            syntaxHighlight
                             value={state.humanSyntax}
-                            onClick={(event) => {}}
                         />
                     </label>
                 </section>

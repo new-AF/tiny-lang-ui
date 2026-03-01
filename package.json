@@ -19,6 +19,7 @@
         "ohm-js": "^17.3.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
+        "react-syntax-highlighter": "^16.1.1",
         "simple-merge-class-names": "^7.0.3",
         "tailwindcss": "^4.1.18",
         "tsx": "^4.21.0"
